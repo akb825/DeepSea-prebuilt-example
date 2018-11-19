@@ -1,0 +1,39 @@
+{
+	"textures":
+	[
+		{
+			"path": "../Shared/SimpleTexture.png",
+			"format": "R8G8B8A8",
+			"type": "unorm"
+		}
+	],
+	"faceGroups":
+	[
+		{
+			"name": "default",
+			"faces":
+			[
+				{"name": "sans", "path": "../Shared/Fonts/NotoSans-Regular.ttc"},
+				{"name": "arabic", "path": "../Shared/Fonts/NotoSansArabic-Regular.ttf"},
+				{"name": "thai", "path": "../Shared/Fonts/NotoSansThai-Regular.ttf"},
+				{"name": "serif", "path": "../Shared/Fonts/NotoSerif-Regular.ttf"}
+			]
+		}
+	],
+	"fonts":
+	[
+		{
+			"name": "sans-serif",
+			"faceGroup": "default",
+			"faces": ["sans", "arabic", "thai"],
+			"quality": "high"
+		},
+		{
+			"name": "serif",
+			"faceGroup": "default",
+			"faces": ["serif"],
+			"quality": "high",
+			"cacheSize": "small"
+		}
+	]
+}
