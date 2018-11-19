@@ -12,16 +12,16 @@ if (TARGET deepsea_render_opengl)
 	list(APPEND srgbShaderConfigs glsl-1.5 glsl-4.0 glsl-es-3.0 glsl-es-3.2)
 endif()
 
-add_executable(TestVectorDraw WIN32 ${source})
-target_link_libraries(TestVectorDraw PRIVATE deepsea_render_bootstrap
+add_executable(TestVectorDrawApp WIN32 ${source})
+target_link_libraries(TestVectorDrawApp PRIVATE deepsea_render_bootstrap
 	deepsea_application_sdl deepsea_vector_draw ${libraries})
-ds_link_main_lib(TestVectorDraw deepsea_application_sdl_main)
-target_compile_definitions(TestVectorDraw PRIVATE ${defines})
+ds_link_main_lib(TestVectorDrawApp deepsea_application_sdl_main)
+target_compile_definitions(TestVectorDrawApp PRIVATE ${defines})
 
 set(shaderDir ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 set(resourceDir ${CMAKE_CURRENT_BINARY_DIR}/resources)
 set(imageDir ${CMAKE_CURRENT_BINARY_DIR}/images)
-add_custom_target(TestVectorDraw_prepare
+add_custom_target(TestVectorDrawApp_prepare
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${shaderDir}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${resourceDir}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${imageDir})
@@ -40,16 +40,16 @@ ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFill.ms
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFillSRGB.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementLineSRGB.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl
-	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextSRGB.msl  OUTPUT TestVectorDrawSRGB.mslb
+	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextSRGB.msl  OUTPUT TestVectorDrawAppSRGB.mslb
 	CONFIG ${srgbShaderConfigs} ${shaderOptions})
-ds_compile_shaders_target(TestVectorDraw_shaders shaders
-	DEPENDS TestVectorDraw_prepare)
+ds_compile_shaders_target(TestVectorDrawApp_shaders shaders
+	DEPENDS TestVectorDrawApp_prepare)
 
 # Shared resources
 ds_create_vector_resources(resources FILE ${CMAKE_CURRENT_SOURCE_DIR}/resources.json
 	OUTPUT ${resourceDir}/resources.dsvr)
-ds_create_vector_resources_target(TestVectorDraw_resources resources
-	DEPENDS TestVectorDraw_prepare)
+ds_create_vector_resources_target(TestVectorDrawApp_resources resources
+	DEPENDS TestVectorDrawApp_prepare)
 
 # SVGs
 file(GLOB svgFiles SVGs/*.svg)
@@ -57,18 +57,18 @@ foreach (svg ${svgFiles})
 	get_filename_component(svgName ${svg} NAME_WE)
 	ds_convert_svg(svgs FILE ${svg} OUTPUT ${imageDir}/${svgName}.dsvi)
 endforeach()
-ds_convert_svg_target(TestVectorDraw_svgs svgs
-	DEPENDS TestVectorDraw_prepare)
+ds_convert_svg_target(TestVectorDrawApp_svgs svgs
+	DEPENDS TestVectorDrawApp_prepare)
 
 ds_build_assets_dir(assetsDir)
 set(assetsDir ${assetsDir}/assets)
-add_custom_target(TestVectorDraw_assets
-	DEPENDS TestVectorDraw_shaders TestVectorDraw_resources
-		TestVectorDraw_svgs
+add_custom_target(TestVectorDrawApp_assets
+	DEPENDS TestVectorDrawApp_shaders TestVectorDrawApp_resources
+		TestVectorDrawApp_svgs
 	COMMAND ${CMAKE_COMMAND} -E remove_directory ${assetsDir}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${assetsDir}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${shaderDir} ${assetsDir}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${resourceDir} ${assetsDir}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${imageDir} ${assetsDir}
-	COMMENT "Copying assets for TestVectorDraw")
-add_dependencies(TestVectorDraw TestVectorDraw_assets)
+	COMMENT "Copying assets for TestVectorDrawApp")
+add_dependencies(TestVectorDrawApp TestVectorDrawApp_assets)

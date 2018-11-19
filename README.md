@@ -60,4 +60,4 @@ Once the pre-built package has been built, you can then run CMake as normal in o
 	cmake .. -DCMAKE_BUILD_TYPE=Release
 	make -j8
 	
-The test application may be found under `TestVectorDraw/TestVectorDraw`.
+The test application may be found under `TestVectorDraw/TestVectorDrawApp`.
