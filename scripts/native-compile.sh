@@ -12,7 +12,9 @@ fi
 
 rm -rf "$INSTALL_PREFIX"
 
+# Install to an intermediate location first to ensure absolute paths aren't used.
 cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH="$INSTALL_DIR" \
-	-DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" $@
+	-DCMAKE_INSTALL_PREFIX=install $@
 make -j$PROCESSORS
 make install
+mv install "$INSTALL_PREFIX"

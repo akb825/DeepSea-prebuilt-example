@@ -11,10 +11,12 @@ do
 	INSTALL_PREFIX="$INSTALL_DIR/android-$ANDROID_ABI"
 	rm -rf "$INSTALL_PREFIX"
 	rm -rf *
+	# Install to an intermediate location first to ensure absolute paths aren't used.
 	cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_TOOLCHAIN_FILE="$ANDROID_TOOLCHAIN" \
 		-DANDROID_PLATFORM=$ANDROID_VERSION -DANDROID_ABI=$ANDROID_ABI \
-		-DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX" $@
+		-DCMAKE_INSTALL_PREFIX=install $@
 	make -j$PROCESSORS
 	make install
+	mv install "$INSTALL_PREFIX"
 done
