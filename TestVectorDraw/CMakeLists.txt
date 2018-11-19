@@ -12,7 +12,12 @@ if (TARGET deepsea_render_opengl)
 	list(APPEND srgbShaderConfigs glsl-1.5 glsl-4.0 glsl-es-3.0 glsl-es-3.2)
 endif()
 
-add_executable(TestVectorDrawApp WIN32 ${source})
+if (ANDROID)
+	add_library(TestVectorDrawApp SHARED ${source})
+else()
+	add_executable(TestVectorDrawApp WIN32 ${source})
+endif()
+
 target_link_libraries(TestVectorDrawApp PRIVATE deepsea_render_bootstrap
 	deepsea_application_sdl deepsea_vector_draw ${libraries})
 ds_link_main_lib(TestVectorDrawApp deepsea_application_sdl_main)
@@ -61,7 +66,7 @@ ds_convert_svg_target(TestVectorDrawApp_svgs svgs
 	DEPENDS TestVectorDrawApp_prepare)
 
 ds_build_assets_dir(assetsDir)
-set(assetsDir ${assetsDir}/assets)
+set(assetsDir ${assetsDir}/TestVectorDraw-assets)
 add_custom_target(TestVectorDrawApp_assets
 	DEPENDS TestVectorDrawApp_shaders TestVectorDrawApp_resources
 		TestVectorDrawApp_svgs

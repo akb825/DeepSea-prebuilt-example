@@ -22,7 +22,12 @@ While this is an example of using pre-built DeepSea, you must pre-build DeepSea 
 * android-armeabi-v7a
 * android-arm64-v8a
 
-Scripts are provided to help in creating these pre-built packages.
+Two scripts are provided to help in building the packages:
+
+* `update.sh`: downloads and updates the DeepSea repository. Using the `-p` option you can tell it which platforms to download dependencies for. If you don't provide `-p`, it will only update previously downloaded platforms, so it's important to use `-p` at least once for the initial platforms you intend to build.
+* `prebuild.sh`/`prebuild.bat`: script to compile and install the pre-built DeepSea libraries. The `-p` option can be used to cross-compile for different platforms:
+	* On Mac and Linux, you can use the `android` platform to build the Android libraries. By default it will build for the native platform.
+	* On Windows, you can use `win32` and `win64` to build for 32-bit or 64-bit. By default it will build 32-bit.
 
 ## Linux and macOS
 
@@ -39,17 +44,9 @@ For macOS using [Homebrew](https://brew.sh/), the following packages should be i
 
 ### Pre-building DeepSea
 
-First run `update.sh` with the platforms you want to build for. This will download the DeepSea repository and the binary dependencies for the requested platforms. On Linux run
+First run the `update.sh` script with the `-p` option for your platform. In other words, run `./update.sh -p linux` on Linux or `./update.sh -p mac` on Mac. After the initial setup, you can omit the `-p` option to get the latest code.
 
-	./update.sh -p linux
-
-and on Mac run
-
-	./update.sh -p mac
-
-Subsequent calls to `update.sh` will automatically update for the previously requested platforms.
-
-You may then run the `prebuild.sh` script. This will build for your current native platform by default.
+After pulling the latest code, run `./prebuild.sh` to create the pre-built package.
 
 ### Building the test application
 
@@ -61,3 +58,29 @@ Once the pre-built package has been built, you can then run CMake as normal in o
 	make -j8
 	
 The test application may be found under `TestVectorDraw/TestVectorDrawApp`.
+
+Use the arrow keys to cycle through the SVGs and press 'w' to toggle wireframe.
+
+## Android
+
+The Android test app can be built using [Android Studio](https://developer.android.com/studio/). This can be used on any platform, though scripts to automate creating the pre-built packages are only provided for Linux and macOS.
+
+You will need the following packages installed in Android Studio:
+
+* SDK Platform API 18 (Android 4.3 Jelly Bean)
+* SDK Tools:
+	* CMake
+	* LLDB
+	* NDK
+
+### Pre-building DeepSea
+
+First run `./update.sh -p android` to download DeepSea and get the dependencies for Android. After the initial setup, you can omit the `-p` option to get the latest code.
+
+After pulling the latest code, run `./prebuild.sh -p android --android-sdk ~/Android/Sdk` to create the pre-built package. Note that `~/Android/Sdk` is the default install location for the Android SDK, change the path as necessary if you installed in a custom location.
+
+### Building the test application
+
+Open the project under the android sub-directory in Android Studio. After building the APK, you should be able to deploy and run it on any reasonably up to date Android phone. Tap to view the next SVG and use a two-finger tap to view the previous SVG.
+
+> **Note:** If you wish to run the test application in the emulator, you must enable OpenGL ES 3.1 support. In the control panel that comes off the side of the emulator, press the "..." button, go to Settings, then Advanced and set OpenGL ES API level to "Renderer maximum".

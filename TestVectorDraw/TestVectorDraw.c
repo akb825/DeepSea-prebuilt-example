@@ -78,7 +78,7 @@ typedef struct TestVectorDraw
 
 #define TARGET_SIZE 600
 
-static const char* assetsDir = "assets";
+static const char* assetsDir = "TestVectorDraw-assets";
 static char shaderDir[100];
 
 const char* vectorImageFiles[] =
