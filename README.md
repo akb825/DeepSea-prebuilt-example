@@ -84,3 +84,25 @@ After pulling the latest code, run `./prebuild.sh -p android --android-sdk ~/And
 Open the project under the android sub-directory in Android Studio. After building the APK, you should be able to deploy and run it on any reasonably up to date Android phone. Tap to view the next SVG and use a two-finger tap to view the previous SVG.
 
 > **Note:** If you wish to run the test application in the emulator, you must enable OpenGL ES 3.1 support. In the control panel that comes off the side of the emulator, press the "..." button, go to Settings, then Advanced and set OpenGL ES API level to "Renderer maximum".
+
+## Windows
+
+The project on Windows can be built using Visual Studio 2015 or higher. You will also need CMake installed, with the `cmake` executable available from the `PATH` environment variable. It's assumed you have Git installed as well.
+
+### Pre-building DeepSea
+
+First run the `update.sh` script within either Git Bash or Cygwin, depending on how you've installed git. You must pass the `-p win32` option to download the dependencies for a 32-bit build or `-p win64` to download the dependencies for a 64-bit build. After the initial setup, you can omit the `-p` option to get the latest code for the previously installed platforms.
+
+Within a cmd prompt, you can run the `prebuild.bat` script. By default it will build 32-bit, but you can pass `-p win64` to build for 64-bit instead.
+
+### Building the test application
+
+Once the pre-built package has been built, you can then run CMake as normal in order to build the test application. For example, to build a Visual Studio 2017 project:
+
+	mkdir build
+	cd build
+	cmake .. -G "Visual Studio 15 2017"
+
+Alternatively, the CMake GUI tool can be used to generate the project.
+
+Once the Visual Studio project has been created, open it and build the TestVectorDrawApp target. Use the arrow keys to cycle through the SVGs and press 'w' to toggle wireframe.
