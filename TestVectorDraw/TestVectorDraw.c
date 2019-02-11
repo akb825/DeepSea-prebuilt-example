@@ -286,7 +286,7 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	clearValue.colorValue.floatValue.b = 1.0f;
 	clearValue.colorValue.floatValue.a = 1.0f;
 	DS_VERIFY(dsRenderPass_begin(testVectorDraw->renderPass, commandBuffer,
-		testVectorDraw->framebuffer, NULL, &clearValue, 1, false));
+		testVectorDraw->framebuffer, NULL, &clearValue, 1));
 
 	dsVectorImage* image = testVectorDraw->vectorImages[testVectorDraw->curVectorImage];
 
@@ -333,7 +333,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	}
 
 	dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->currentBuffers[0];
-	if (!dsCommandBuffer_begin(setupCommands, NULL, 0, NULL))
+	if (!dsCommandBuffer_begin(setupCommands))
 	{
 		DS_LOG_ERROR_F("TestText", "Couldn't begin setup command buffer: %s",
 			dsErrorString(errno));
@@ -360,7 +360,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	dsAttachmentInfo attachment = {dsAttachmentUsage_Clear, renderer->surfaceColorFormat,
 		DS_DEFAULT_ANTIALIAS_SAMPLES};
 
-	dsColorAttachmentRef colorAttachment = {0, false};
+	dsColorAttachmentRef colorAttachment = {0, true};
 	uint32_t depthStencilAttachment = DS_NO_ATTACHMENT;
 	dsRenderSubpassInfo subpass =
 	{
@@ -419,7 +419,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		DS_PROFILE_FUNC_RETURN(false);
 	}
 
-	testVectorDraw->material = dsMaterial_create(allocator,
+	testVectorDraw->material = dsMaterial_create(resourceManager, allocator,
 		testVectorDraw->shaderModule->materialDesc);
 	if (!testVectorDraw->material)
 	{
