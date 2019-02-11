@@ -201,6 +201,7 @@ static bool processEvent(dsApplication* application, dsWindow* window, const dsE
 			testVectorDraw->window = NULL;
 			return false;
 		case dsEventType_WindowResized:
+		case dsEventType_SurfaceInvalidated:
 			if (!createFramebuffer(testVectorDraw))
 				abort();
 			return true;
