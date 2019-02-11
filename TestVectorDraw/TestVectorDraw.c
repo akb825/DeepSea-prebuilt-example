@@ -358,8 +358,8 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	if (!createFramebuffer(testVectorDraw))
 		DS_PROFILE_FUNC_RETURN(false);
 
-	dsAttachmentInfo attachment = {dsAttachmentUsage_Clear, renderer->surfaceColorFormat,
-		DS_DEFAULT_ANTIALIAS_SAMPLES};
+	dsAttachmentInfo attachment = {dsAttachmentUsage_Clear | dsAttachmentUsage_KeepAfter,
+		renderer->surfaceColorFormat, DS_DEFAULT_ANTIALIAS_SAMPLES};
 
 	dsColorAttachmentRef colorAttachment = {0, true};
 	uint32_t depthStencilAttachment = DS_NO_ATTACHMENT;
