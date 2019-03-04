@@ -44,12 +44,16 @@ set(shaderOptions OUTPUT_DIR ${shaderDir}
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFill.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementLine.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl
-	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementText.msl OUTPUT TestVectorDraw.mslb
+	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextColor.msl
+	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextGradient.msl
+	OUTPUT TestVectorDraw.mslb
 	CONFIG ${shaderConfigs} ${shaderOptions})
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFillSRGB.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementLineSRGB.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl
-	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextSRGB.msl  OUTPUT TestVectorDrawAppSRGB.mslb
+	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextColorSRGB.msl
+	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextGradientSRGB.msl
+	OUTPUT TestVectorDrawAppSRGB.mslb
 	CONFIG ${srgbShaderConfigs} ${shaderOptions})
 ds_compile_shaders_target(TestVectorDrawApp_shaders shaders
 	DEPENDS TestVectorDrawApp_prepare)
