@@ -3,7 +3,7 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 PROCESSORS="$( "$DIR/processors.sh" )"
-ANDROID_TOOLCHAIN="$ANDROID_SDK/ndk-bundle/build/cmake/android.toolchain.cmake"
+ANDROID_TOOLCHAIN="$ANDROID_NDK/build/cmake/android.toolchain.cmake"
 ANDROID_ABIS=(x86 x86_64 armeabi-v7a arm64-v8a)
 
 for ANDROID_ABI in ${ANDROID_ABIS[@]}

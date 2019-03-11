@@ -12,7 +12,7 @@ BUILD_DIR="$DEEPSEA_DIR/build"
 FLAGS=`cat "$DIR/scripts/flags"`
 PLATFORM=native
 CMAKE_ARGS=
-ANDROID_SDK=
+ANDROID_NDK=
 ANDROID_VERSION=android-18
 
 function printHelp {
@@ -24,7 +24,7 @@ function printHelp {
 	echo "-p, --platform <platform>    The platform to build for. Valid platforms are:"
 	echo "                             - native (default)"
 	echo "                             - android"
-	echo "--android-sdk <dir>          Directory of the Android SDK root. Must be set"
+	echo "--android-ndk <dir>          Directory of the Android NDK root. Must be set"
 	echo "                             when platform is set to 'android'."
 	echo "--android-version <version>  Version to use when building for Android. Defaults"
 	echo "                             to $ANDROID_VERSION"
@@ -51,9 +51,9 @@ do
 				;;
 			esac
 			;;
-		--android-sdk)
+		--android-ndk)
 			shift
-			ANDROID_SDK="$1"
+			ANDROID_NDK="$1"
 			;;
 		--android-version)
 			shift
@@ -67,17 +67,17 @@ do
 done
 
 if [ $PLATFORM = android ]; then
-	if [ -z "$ANDROID_SDK" ]; then
-		echo "The --android-sdk option must be given when building for Android."
+	if [ -z "$ANDROID_NDK" ]; then
+		echo "The --android-ndk option must be given when building for Android."
 		echo
 		printHelp
 		exit 1
-	elif [ ! -d "$ANDROID_SDK" ]; then
-		echo "Android SDK locaton '$ANDROID_SDK' doesn't exist."
+	elif [ ! -d "$ANDROID_NDK" ]; then
+		echo "Android NDK locaton '$ANDROID_NDK' doesn't exist."
 		exit 1
 	fi
 
-	export ANDROID_SDK
+	export ANDROID_NDK
 	export ANDROID_VERSION
 fi
 
