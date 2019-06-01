@@ -20,9 +20,24 @@ public class DeepSeaActivity extends SDLActivity
 				sdlIndex = i;
 		}
 
+		// Expects SDL to be first.
 		String temp = libraries[0];
 		libraries[0] = libraries[sdlIndex];
 		libraries[sdlIndex] = temp;
+
+		// Expects the "main" library to be last.
+		int mainIndex = -1;
+		for (int i = 0; i < libraries.length; ++i)
+		{
+			if (libraries[i].contains("app") || libraries[i].contains("main"))
+			{
+				int newMainIndex = libraries.length - 1;
+				temp = libraries[i];
+				libraries[i] = libraries[newMainIndex];
+				libraries[newMainIndex] = temp;
+				break;
+			}
+		}
 		return libraries;
 	}
 };
