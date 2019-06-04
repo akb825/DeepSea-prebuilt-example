@@ -22,6 +22,12 @@ endif()
 
 if (ANDROID)
 	add_library(TestVectorDrawApp SHARED ${source})
+elseif (IOS)
+	add_executable(TestVectorDrawApp MACOSX_BUNDLE ${source})
+	set_target_properties(TestVectorDrawApp PROPERTIES
+		MACOSX_BUNDLE_GUI_IDENTIFIER com.deepsea.prebuilt.testvectordraw
+		MACOSX_BUNDLE_BUNDLE_NAME TestVectorDrawApp
+		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 1,2)
 else()
 	add_executable(TestVectorDrawApp WIN32 ${source})
 endif()
@@ -77,7 +83,7 @@ endforeach()
 ds_convert_svg_target(TestVectorDrawApp_svgs svgs
 	DEPENDS TestVectorDrawApp_prepare)
 
-ds_build_assets_dir(assetsDir)
+ds_build_assets_dir(assetsDir TestVectorDrawApp)
 set(assetsDir ${assetsDir}/TestVectorDraw-assets)
 add_custom_target(TestVectorDrawApp_assets
 	DEPENDS TestVectorDrawApp_shaders TestVectorDrawApp_resources

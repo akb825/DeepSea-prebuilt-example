@@ -24,6 +24,7 @@ function printHelp {
 	echo "-p, --platform <platform>    The platform to build for. Valid platforms are:"
 	echo "                             - native (default)"
 	echo "                             - android"
+	echo "                             - ios"
 	echo "--android-ndk <dir>          Directory of the Android NDK root. Must be set"
 	echo "                             when platform is set to 'android'."
 	echo "--android-version <version>  Version to use when building for Android. Defaults"
@@ -40,7 +41,7 @@ do
 		-p|--platform)
 			shift
 			case "$1" in
-				native|android)
+				native|android|ios)
 					PLATFORM=$1
 					;;
 				*)

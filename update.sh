@@ -16,6 +16,7 @@ function printHelp {
 	echo "                           platforms. The following platforms are supported:"
 	echo "                           - linux (Linux for x86-64)"
 	echo "                           - mac (macOS for x86-64)"
+	echo "                           - ios (iOS for arm64)"
 	echo "                           - win32 (Windows for x86)"
 	echo "                           - win64 (Windows for x86_64)"
 	echo "                           - android (Android for all supported ABIs)"

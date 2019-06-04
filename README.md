@@ -85,6 +85,22 @@ Open the project under the android sub-directory in Android Studio. After buildi
 
 > **Note:** If you wish to run the test application in the emulator, you must enable OpenGL ES 3.1 support. In the control panel that comes off the side of the emulator, press the "..." button, go to Settings, then Advanced and set OpenGL ES API level to "Renderer maximum".
 
+## iOS
+
+The iOS test app can be built using Xcode.
+
+### Pre-building DeepSea
+
+First run `./update.sh -p ios` to download DeepSea and get the dependencies for iOS. After the initial setup, you can omit the `-p` option to get the latest code. After pulling the latest code, run `./prebuild.sh -p iOS` to create the pre-built package.
+
+### Building the test application
+
+Once the pre-built package has been built, you can then run CMake to generate an Xcode project with the iOS toolchain. For example:
+
+	mkdir build
+	cd build
+	cmake .. -G Xcode -DCMAKE_TOOLCHAIN_FILE=../DeepSea/cmake/ios.toolchain.cmake
+
 ## Windows
 
 The project on Windows can be built using Visual Studio 2015 or higher. You will also need CMake installed, with the `cmake` executable available from the `PATH` environment variable. It's assumed you have Git installed as well.
