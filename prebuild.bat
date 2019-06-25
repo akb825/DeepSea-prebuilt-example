@@ -10,7 +10,7 @@ set BUILD_DIR=%DEEPSEA_DIR%\build
 set /P FLAGS=<"%DIR%scripts\flags"
 set PLATFORM=native
 set CMAKE_ARGS=
-set CMAKE_PLATFORM_ARGS="-DCMAKE_GENERATOR_PLATFORM=Win32"
+set CMAKE_PLATFORM_ARGS=-A Win32
 set TOOLSET=v140
 set WIN_PLATFORM=win32
 
@@ -27,11 +27,11 @@ if not "%1"=="" (
 		if "%1"=="--platform" set MATCH=1
 		if defined MATCH (
 			if "%2"=="win32" (
-				set CMAKE_PLATFORM_ARGS="-DCMAKE_GENERATOR_PLATFORM=Win32"
+				set CMAKE_PLATFORM_ARGS=-A Win32
 				set WIN_PLATFORM=win32
 			) else (
 				if "%2"=="win64" (
-					set CMAKE_PLATFORM_ARGS="-DCMAKE_GENERATOR_PLATFORM=x64"
+					set CMAKE_PLATFORM_ARGS=-A x64
 					set WIN_PLATFORM=win64
 				) else (
 					echo Unknown platform "%2"

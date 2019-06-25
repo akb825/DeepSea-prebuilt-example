@@ -113,11 +113,11 @@ Within a cmd prompt, you can run the `prebuild.bat` script. By default it will b
 
 ### Building the test application
 
-Once the pre-built package has been built, you can then run CMake as normal in order to build the test application. For example, to build a Visual Studio 2017 project:
+Once the pre-built package has been built, you can then run CMake as normal in order to build the test application. For example, to build a Visual Studio project for the latest version you have installed:
 
 	mkdir build
 	cd build
-	cmake .. -G "Visual Studio 15 2017"
+	cmake ..
 
 Alternatively, the CMake GUI tool can be used to generate the project.
 
