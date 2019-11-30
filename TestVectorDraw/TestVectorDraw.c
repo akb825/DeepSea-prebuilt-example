@@ -34,13 +34,12 @@
 #include <DeepSea/Render/Resources/ResourceManager.h>
 #include <DeepSea/Render/Resources/Shader.h>
 #include <DeepSea/Render/Resources/ShaderModule.h>
-#include <DeepSea/Render/Resources/ShaderVariableGroup.h>
-#include <DeepSea/Render/Resources/ShaderVariableGroupDesc.h>
 #include <DeepSea/Render/Resources/VertexFormat.h>
 #include <DeepSea/Render/CommandBuffer.h>
 #include <DeepSea/Render/CommandBufferPool.h>
 #include <DeepSea/Render/Renderer.h>
 #include <DeepSea/Render/RenderPass.h>
+#include <DeepSea/Render/RenderSurface.h>
 #include <DeepSea/RenderBootstrap/RenderBootstrap.h>
 #include <DeepSea/VectorDraw/VectorImage.h>
 #include <DeepSea/VectorDraw/VectorResources.h>
@@ -151,8 +150,8 @@ static bool validateAllocator(dsAllocator* allocator, const char* name)
 
 static bool createFramebuffer(TestVectorDraw* testVectorDraw)
 {
-	uint32_t width = testVectorDraw->window->surface->width;
-	uint32_t height = testVectorDraw->window->surface->height;
+	uint32_t width = testVectorDraw->window->surface->preRotateWidth;
+	uint32_t height = testVectorDraw->window->surface->preRotateHeight;
 
 	dsFramebuffer_destroy(testVectorDraw->framebuffer);
 
@@ -271,7 +270,7 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 
 	if (testVectorDraw->setupCommands)
 	{
-		dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->currentBuffers[0];
+		dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->commandBuffers[0];
 		DS_VERIFY(dsCommandBuffer_submit(commandBuffer, setupCommands));
 		DS_VERIFY(dsCommandBufferPool_destroy(testVectorDraw->setupCommands));
 		testVectorDraw->setupCommands = NULL;
@@ -290,7 +289,7 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	clearValue.colorValue.floatValue.b = 1.0f;
 	clearValue.colorValue.floatValue.a = 1.0f;
 	DS_VERIFY(dsRenderPass_begin(testVectorDraw->renderPass, commandBuffer,
-		testVectorDraw->framebuffer, NULL, &clearValue, 1));
+		testVectorDraw->framebuffer, NULL, &clearValue, 1, false));
 
 	dsVectorImage* image = testVectorDraw->vectorImages[testVectorDraw->curVectorImage];
 
@@ -304,8 +303,12 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	else
 		size.x = size.y*windowAspect;
 
-	dsMatrix44f matrix;
-	DS_VERIFY(dsRenderer_makeOrtho(&matrix, renderer, 0.0f, size.x, 0.0f, size.y, 0.0f, 1.0f));
+	dsMatrix44f projection, surfaceRotation, matrix;
+	DS_VERIFY(dsRenderer_makeOrtho(&projection, renderer, 0.0f, size.x, 0.0f, size.y, 0.0f, 1.0f));
+	DS_VERIFY(dsRenderSurface_makeRotationMatrix44(&surfaceRotation,
+		testVectorDraw->window->surface->rotation));
+	dsMatrix44_mul(matrix, surfaceRotation, projection);
+
 	dsVectorShaders* shaders;
 	if (testVectorDraw->wireframe)
 		shaders = testVectorDraw->wireframeShaders;
@@ -328,15 +331,16 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	testVectorDraw->renderer = renderer;
 
 	testVectorDraw->setupCommands = dsCommandBufferPool_create(renderer, allocator,
-		dsCommandBufferUsage_Standard, 1);
-	if (!testVectorDraw->setupCommands)
+		dsCommandBufferUsage_Standard);
+	if (!testVectorDraw->setupCommands ||
+		!dsCommandBufferPool_createCommandBuffers(testVectorDraw->setupCommands, 1))
 	{
 		DS_LOG_ERROR_F("TestText", "Couldn't create setup command buffer: %s",
 			dsErrorString(errno));
 		DS_PROFILE_FUNC_RETURN(false);
 	}
 
-	dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->currentBuffers[0];
+	dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->commandBuffers[0];
 	if (!dsCommandBuffer_begin(setupCommands))
 	{
 		DS_LOG_ERROR_F("TestText", "Couldn't begin setup command buffer: %s",
@@ -351,7 +355,8 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	float targetImageSize = dsApplication_adjustSize(application, 0, (float)TARGET_SIZE);
 	testVectorDraw->window = dsWindow_create(application, allocator, "Test Vector Draw", NULL,
 		NULL, targetWindowSize, targetWindowSize,
-		dsWindowFlags_Resizeable | dsWindowFlags_DelaySurfaceCreate);
+		dsWindowFlags_Resizeable | dsWindowFlags_DelaySurfaceCreate,
+		dsRenderSurfaceUsage_ClientRotations);
 	if (!testVectorDraw->window)
 	{
 		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't create window: %s", dsErrorString(errno));
@@ -383,7 +388,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		"TestVectorDraw", NULL, &colorAttachment, {depthStencilAttachment, false}, 0, 1
 	};
 	testVectorDraw->renderPass = dsRenderPass_create(renderer, allocator, &attachment, 1, &subpass,
-		1, NULL, 0);
+		1, NULL, DS_DEFAULT_SUBPASS_DEPENDENCIES);
 	if (!testVectorDraw->renderPass)
 	{
 		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't create render pass: %s", dsErrorString(errno));
@@ -543,7 +548,7 @@ static void shutdown(TestVectorDraw* testVectorDraw)
 int dsMain(int argc, const char** argv)
 {
 #if DS_HAS_EASY_PROFILER
-	dsEasyProfiler_start();
+	dsEasyProfiler_start(false);
 	dsEasyProfiler_startListening(DS_DEFAULT_EASY_PROFILER_PORT);
 #endif
 
@@ -574,7 +579,7 @@ int dsMain(int argc, const char** argv)
 				return 1;
 			}
 		}
-		else
+		else if (*argv[i])
 		{
 			printf("Unknown option: %s\n", argv[i]);
 			printHelp(argv[0]);
@@ -663,4 +668,3 @@ int dsMain(int argc, const char** argv)
 
 	return exitCode;
 }
-
