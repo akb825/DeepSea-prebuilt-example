@@ -11,7 +11,6 @@ set /P FLAGS=<"%DIR%scripts\flags"
 set PLATFORM=native
 set CMAKE_ARGS=
 set CMAKE_PLATFORM_ARGS=-A Win32
-set TOOLSET=v140
 set WIN_PLATFORM=win32
 
 :parseArgs
@@ -54,7 +53,7 @@ if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 echo Building DeepSea...
 
 cd "%BUILD_DIR%"
-call "%DIR%scripts\!PLATFORM!-compile.bat" -T!TOOLSET! %FLAGS% !CMAKE_PLATFORM_ARGS! !CMAKE_ARGS!
+call "%DIR%scripts\!PLATFORM!-compile.bat" %FLAGS% !CMAKE_PLATFORM_ARGS! !CMAKE_ARGS!
 if !ERRORLEVEL! neq 0 (
 	cd %PREV_DIR%
 	exit /B !ERRORLEVEL!
