@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.akb825.testvectordraw"
+        applicationId "com.akb825.deepsea.prebuilt"
         minSdkVersion 18
         targetSdkVersion 28
         versionCode 1
@@ -28,20 +28,55 @@ android {
         }
     }
     task copyArm32Libraries(type: Copy) {
-        from "${projectDir}/../../install/android-armeabi-v7a/lib/libSDL2.so"
+        from ("${projectDir}/../../install/android-armeabi-v7a/lib") {
+            include "*.so"
+        }
         into "${projectDir}/src/main/jniLibs/armeabi-v7a"
     }
     task copyArm64Libraries(type: Copy) {
-        from "${projectDir}/../../install/android-arm64-v8a/lib/libSDL2.so"
+        from ("${projectDir}/../../install/android-arm64-v8a/lib") {
+            include "*.so"
+        }
         into "${projectDir}/src/main/jniLibs/arm64-v8a"
     }
     task copyX86Libraries(type: Copy) {
-        from "${projectDir}/../../install/android-x86/lib/libSDL2.so"
+        from ("${projectDir}/../../install/android-x86/lib") {
+            include "*.so"
+        }
         into "${projectDir}/src/main/jniLibs/x86"
     }
     task copyX86_64Libraries(type: Copy) {
-        from "${projectDir}/../../install/android-x86_64/lib/libSDL2.so"
+        from ("${projectDir}/../../install/android-x86_64/lib") {
+            include "*.so"
+        }
         into "${projectDir}/src/main/jniLibs/x86_64"
+    }
+    flavorDimensions "tester"
+    productFlavors {
+        TestVectorDraw {
+            externalNativeBuild {
+                cmake {
+                    targets "TestVectorDrawApp"
+                }
+            }
+            dimension "tester"
+
+            applicationIdSuffix ".vectordraw"
+            versionNameSuffix "-TestVectorDraw"
+            resValue "string", "app_name", "TestVectorDraw"
+        }
+        TestScene {
+            externalNativeBuild {
+                cmake {
+                    targets "TestSceneApp"
+                }
+            }
+            dimension "tester"
+
+            applicationIdSuffix ".scene"
+            versionNameSuffix "-TestScene"
+            resValue "string", "app_name", "TestScene"
+        }
     }
 }
 

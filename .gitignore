@@ -1,5 +1,7 @@
 build
 install
 DeepSea
+__pycache__
 prebuild-custom*.bat
 *.swp
+*.pyc

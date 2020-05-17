@@ -1,4 +1,4 @@
-find_package(DeepSea CONFIG COMPONENTS ApplicationSDL RenderBootstrap VectorDraw)
+find_package(DeepSea COMPONENTS ApplicationSDL RenderBootstrap VectorDraw REQUIRED)
 
 set(libraries)
 set(defines)
@@ -48,9 +48,9 @@ add_custom_target(TestVectorDrawApp_prepare
 # Shaders
 set(shaderOptions OUTPUT_DIR ${shaderDir}
 	INCLUDE ${DEEPSEA_INCLUDE_DIR}
-	DEPENDENCY_RECURSE ${DEEPSEA_INCLUDE_DIR}/DeepSea/Render/include/*.mslh
-		${DEEPSEA_INCLUDE_DIR}/DeepSea//Text/include/*.mslh
-		${DEEPSEA_INCLUDE_DIR}/DeepSea//VectorDraw/include/*.mslh)
+	DEPENDENCY_RECURSE ${DEEPSEA_INCLUDE_DIR}/DeepSea/Render/*.mslh
+		${DEEPSEA_INCLUDE_DIR}/DeepSea/Text/*.mslh
+		${DEEPSEA_INCLUDE_DIR}/DeepSea/VectorDraw/*.mslh)
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFill.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementLine.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl

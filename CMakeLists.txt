@@ -22,4 +22,8 @@ else()
 	endif()
 endif()
 
+set(ROOT_DIR ${CMAKE_CURRENT_LIST_DIR})
+include(external/ConvertFlatbuffers.cmake)
+
 add_subdirectory(TestVectorDraw)
+add_subdirectory(TestScene)
