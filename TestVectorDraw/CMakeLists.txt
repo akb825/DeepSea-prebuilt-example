@@ -16,21 +16,16 @@ if (TARGET deepsea_render_vulkan)
 	list(APPEND srgbShaderConfigs spirv-1.0)
 endif()
 if (TARGET deepsea_render_metal)
-	list(APPEND shaderConfigs metal-ios-1.1 metal-osx-1.1)
-	list(APPEND srgbShaderConfigs metal-ios-1.1 metal-osx-1.1)
+	if (IOS)
+		list(APPEND shaderConfigs metal-ios-1.1)
+		list(APPEND srgbShaderConfigs metal-ios-1.1)
+	else()
+		list(APPEND shaderConfigs metal-osx-1.1)
+		list(APPEND srgbShaderConfigs metal-osx-1.1)
+	endif()
 endif()
 
-if (ANDROID)
-	add_library(TestVectorDrawApp SHARED ${source})
-elseif (IOS)
-	add_executable(TestVectorDrawApp MACOSX_BUNDLE ${source})
-	set_target_properties(TestVectorDrawApp PROPERTIES
-		MACOSX_BUNDLE_GUI_IDENTIFIER com.deepsea.prebuilt.testvectordraw
-		MACOSX_BUNDLE_BUNDLE_NAME TestVectorDrawApp
-		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 1,2)
-else()
-	add_executable(TestVectorDrawApp WIN32 ${source})
-endif()
+add_test_executable(TestVectorDrawApp ${source})
 
 target_link_libraries(TestVectorDrawApp PRIVATE deepsea_render_bootstrap
 	deepsea_application_sdl deepsea_vector_draw ${libraries})

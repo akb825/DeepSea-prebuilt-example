@@ -17,17 +17,7 @@ if (TARGET deepsea_render_metal)
 	endif()
 endif()
 
-if (ANDROID)
-	add_library(TestSceneApp SHARED ${source})
-elseif (IOS)
-	add_executable(TestSceneApp MACOSX_BUNDLE ${source})
-	set_target_properties(TestSceneApp PROPERTIES
-		MACOSX_BUNDLE_GUI_IDENTIFIER com.deepsea.prebuilt.testvectordraw
-		MACOSX_BUNDLE_BUNDLE_NAME TestSceneApp
-		XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY 1,2)
-else()
-	add_executable(TestSceneApp WIN32 ${source})
-endif()
+add_test_executable(TestSceneApp ${source})
 
 target_link_libraries(TestSceneApp PRIVATE
 	deepsea_render_bootstrap deepsea_scene deepsea_application_sdl)
