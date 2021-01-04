@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 Aaron Barany
+ * Copyright 2019-2021 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ static void printHelp(const char* programPath)
 		printf("                                 %s\n",
 			dsRenderBootstrap_rendererName((dsRendererType)i));
 	}
+	printf("  -d, --device <device>        use a graphics device by name\n");
 }
 
 static bool validateAllocator(dsAllocator* allocator, const char* name)
@@ -143,7 +144,7 @@ static bool processEvent(dsApplication* application, dsWindow* window, const dsE
 					samples = 4;
 				else
 					samples = 1;
-				dsRenderer_setSurfaceSamples(renderer, samples);
+				dsRenderer_setSamples(renderer, samples);
 				DS_LOG_INFO_F("TestScene", "Togging anti-aliasing: %s",
 					samples == 1 ? "off" : "on");
 			}
@@ -367,6 +368,7 @@ int dsMain(int argc, const char** argv)
 #endif
 
 	dsRendererType rendererType = dsRendererType_Default;
+	const char* deviceName = NULL;
 	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
@@ -390,6 +392,16 @@ int dsMain(int argc, const char** argv)
 				return 1;
 			}
 		}
+		else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--device") == 0)
+		{
+			if (i == argc - 1)
+			{
+				printf("--device option requires an argument\n");
+				printHelp(argv[0]);
+				return 1;
+			}
+			deviceName = argv[++i];
+		}
 		else if (*argv[i])
 		{
 			printf("Unknown option: %s\n", argv[i]);
@@ -412,7 +424,9 @@ int dsMain(int argc, const char** argv)
 
 	dsRendererOptions rendererOptions;
 	dsRenderer_defaultOptions(&rendererOptions, "TestScene", 0);
+	rendererOptions.surfaceSamples = 4;
 	rendererOptions.maxResourceThreads = 1;
+	rendererOptions.deviceName = deviceName;
 	dsRenderer* renderer = dsRenderBootstrap_createRenderer(rendererType,
 		(dsAllocator*)&renderAllocator, &rendererOptions);
 	if (!renderer)

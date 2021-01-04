@@ -1,4 +1,4 @@
-# Copyright 2020 Aaron Barany
+# Copyright 2020-2021 Aaron Barany
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ from TestScene.LightData import *
 
 def convertLightData(convertContext, data):
 	try:
-		variableGroupDescName = str(data['variableGroupDescName'])
+		variableGroupDescName = str(data['variableGroupDesc'])
 
 		directionInfo = data['direction']
 		try:
@@ -54,7 +54,7 @@ def convertLightData(convertContext, data):
 	builder = flatbuffers.Builder(0)
 	variableGroupDescNameOffset = builder.CreateString(variableGroupDescName)
 	LightDataStart(builder)
-	LightDataAddVariableGroupDescName(builder, variableGroupDescNameOffset)
+	LightDataAddVariableGroupDesc(builder, variableGroupDescNameOffset)
 	LightDataAddDirection(builder, CreateVector3f(builder, *direction))
 	LightDataAddColor(builder, CreateVector3f(builder, *color))
 	LightDataAddAmbient(builder, CreateVector3f(builder, *ambient))

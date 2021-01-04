@@ -28,8 +28,8 @@
 		"elements":
 		[
 			{"name": "world", "type": "Mat4"},
-			{"name": "worldInvTrans", "type": "Mat4"},
 			{"name": "worldView", "type": "Mat4"},
+			{"name": "worldViewInvTrans", "type": "Mat4"},
 			{"name": "worldViewProj", "type": "Mat4"}
 		]
 	},
@@ -112,7 +112,7 @@
 			{
 				"name": "materialColor",
 				"type": "Vec4",
-				"data": [1.0, 0.0, 0.0,1.0]
+				"data": [1.0, 0.0, 0.0, 1.0]
 			}
 		]
 	},
@@ -125,7 +125,7 @@
 			{
 				"name": "materialColor",
 				"type": "Vec4",
-				"data": [0.0, 1.0, 0.0,1.0]
+				"data": [0.0, 1.0, 0.0, 1.0]
 			}
 		]
 	},
@@ -151,14 +151,14 @@
 		"type": "Shader",
 		"name": "cubeShader",
 		"module": "testSceneModule",
-		"pipelineName": "Cube",
+		"pipeline": "Cube",
 		"materialDesc": "cubeDesc"
 	},
 	{
 		"type": "Shader",
 		"name": "groundShader",
 		"module": "testSceneModule",
-		"pipelineName": "Ground",
+		"pipeline": "Ground",
 		"materialDesc": "groundDesc"
 	},
 	{
@@ -196,7 +196,7 @@
 						"name": "Cube",
 						"shader": "cubeShader",
 						"material": "innerCubeMat",
-						"listName": "modelList"
+						"modelList": "modelList"
 					}
 				]
 			}
@@ -215,15 +215,15 @@
 				"nodeType": "TransformNode",
 				"transformList":
 				[
-					{"type": "Scale", "value": [1.5, 0.75, 0.5]},
+					{"type": "Translate", "value": [4.0, -1.0, 3.0]},
 					{"type": "Rotate", "value": [20.0, -40.0, 60.0]},
-					{"type": "Translate", "value": [4.0, -1.0, 3.0]}
+					{"type": "Scale", "value": [1.5, 0.75, 0.5]}
 				],
 				"children":
 				[
 					{
-						"nodeType": "ModelNodeClone",
-						"name": "cubeModelNode",
+						"nodeType": "ModelNodeRemap",
+						"baseName": "cubeModelNode",
 						"materialRemaps":
 						[
 							{"name": "Cube", "material": "outerCubeMat"}
@@ -282,7 +282,7 @@
 								"name": "Plane",
 								"shader": "groundShader",
 								"material": "groundMat",
-								"listName": "modelList"
+								"modelList": "modelList"
 							}
 						]
 					}

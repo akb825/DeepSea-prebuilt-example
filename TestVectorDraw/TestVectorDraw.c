@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Aaron Barany
+ * Copyright 2018-2021 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ static void printHelp(const char* programPath)
 		printf("                                 %s\n",
 			dsRenderBootstrap_rendererName((dsRendererType)i));
 	}
+	printf("  -d, --device <device>        use a graphics device by name\n");
 }
 
 static bool validateAllocator(dsAllocator* allocator, const char* name)
@@ -379,7 +380,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		DS_PROFILE_FUNC_RETURN(false);
 
 	dsAttachmentInfo attachment = {dsAttachmentUsage_Clear | dsAttachmentUsage_KeepAfter,
-		renderer->surfaceColorFormat, DS_DEFAULT_ANTIALIAS_SAMPLES};
+		renderer->surfaceColorFormat, DS_SURFACE_ANTIALIAS_SAMPLES};
 
 	dsAttachmentRef colorAttachment = {0, true};
 	uint32_t depthStencilAttachment = DS_NO_ATTACHMENT;
@@ -553,6 +554,7 @@ int dsMain(int argc, const char** argv)
 #endif
 
 	dsRendererType rendererType = dsRendererType_Default;
+	const char* deviceName = NULL;
 	bool srgb = false;
 	for (int i = 1; i < argc; ++i)
 	{
@@ -579,6 +581,16 @@ int dsMain(int argc, const char** argv)
 				return 1;
 			}
 		}
+		else if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--device") == 0)
+		{
+			if (i == argc - 1)
+			{
+				printf("--device option requires an argument\n");
+				printHelp(argv[0]);
+				return 1;
+			}
+			deviceName = argv[++i];
+		}
 		else if (*argv[i])
 		{
 			printf("Unknown option: %s\n", argv[i]);
@@ -599,8 +611,10 @@ int dsMain(int argc, const char** argv)
 
 	dsRendererOptions rendererOptions;
 	dsRenderer_defaultOptions(&rendererOptions, "TestVectorDraw", 0);
+	rendererOptions.deviceName = deviceName;
 	rendererOptions.depthBits = 0;
 	rendererOptions.stencilBits = 0;
+	rendererOptions.surfaceSamples = 4;
 	dsRenderer* renderer = dsRenderBootstrap_createRenderer(rendererType,
 		(dsAllocator*)&renderAllocator, &rendererOptions);
 	if (!renderer)
