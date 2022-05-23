@@ -168,17 +168,17 @@ static bool processEvent(dsApplication* application, dsWindow* window, const dsE
 	}
 }
 
-static void update(dsApplication* application, double lastFrameTime, void* userData)
+static void update(dsApplication* application, float lastFrameTime, void* userData)
 {
 	DS_UNUSED(application);
 
 	TestScene* testScene = (TestScene*)userData;
 
 	// radians/s
-	const double rate = M_PI_2;
-	testScene->rotation += (float)(lastFrameTime*rate);
+	const float rate = (float)M_PI_2;
+	testScene->rotation += lastFrameTime*rate;
 	while (testScene->rotation > 2*M_PI)
-		testScene->rotation = (float)(testScene->rotation - 2*M_PI);
+		testScene->rotation = testScene->rotation - (float)(2*M_PI);
 
 	dsMatrix44f transform;
 	dsMatrix44f_makeRotate(&transform, 0, testScene->rotation, 0);
@@ -190,7 +190,7 @@ static void update(dsApplication* application, double lastFrameTime, void* userD
 	transform.columns[3].z = 5.0f;
 	DS_VERIFY(dsSceneTransformNode_setTransform(testScene->secondaryTransform, &transform));
 
-	DS_VERIFY(dsScene_update(testScene->scene));
+	DS_VERIFY(dsScene_update(testScene->scene, lastFrameTime));
 	DS_VERIFY(dsView_update(testScene->view));
 }
 
