@@ -1,21 +1,19 @@
 find_package(DeepSea COMPONENTS ApplicationSDL RenderBootstrap VectorDraw REQUIRED)
 
-set(libraries)
-set(defines)
 set(shaderConfigs)
 set(srgbShaderConfigs)
 set(source TestVectorDraw.c
 	VectorElementFill.msl VectorElementLine.msl VectorElementImage.msl VectorElementText.msl
 	VectorElementFillSRGB.msl VectorElementLineSRGB.msl VectorElementTextSRGB.msl)
-if (TARGET deepsea_render_opengl)
+if (TARGET DeepSea::RenderOpenGL)
 	list(APPEND shaderConfigs glsl-1.1 glsl-1.5 glsl-4.0 glsl-es-1.0 glsl-es-3.0 glsl-es-3.2)
 	list(APPEND srgbShaderConfigs glsl-1.5 glsl-4.0 glsl-es-3.0 glsl-es-3.2)
 endif()
-if (TARGET deepsea_render_vulkan)
+if (TARGET DeepSea::RenderVulkan)
 	list(APPEND shaderConfigs spirv-1.0)
 	list(APPEND srgbShaderConfigs spirv-1.0)
 endif()
-if (TARGET deepsea_render_metal)
+if (TARGET DeepSea::RenderMetal)
 	if (IOS)
 		list(APPEND shaderConfigs metal-ios-1.1)
 		list(APPEND srgbShaderConfigs metal-ios-1.1)
@@ -27,10 +25,9 @@ endif()
 
 add_test_executable(TestVectorDrawApp ${source})
 
-target_link_libraries(TestVectorDrawApp PRIVATE deepsea_render_bootstrap
-	deepsea_application_sdl deepsea_vector_draw ${libraries})
-ds_link_main_lib(TestVectorDrawApp deepsea_application_sdl_main)
-target_compile_definitions(TestVectorDrawApp PRIVATE ${defines})
+target_link_libraries(TestVectorDrawApp
+	PRIVATE DeepSea::RenderBootstrap DeepSea::ApplicationSDL DeepSea::VectorDraw)
+ds_link_main_lib(TestVectorDrawApp DeepSea::ApplicationSDLMain)
 
 set(shaderDir ${CMAKE_CURRENT_BINARY_DIR}/shaders)
 set(resourceDir ${CMAKE_CURRENT_BINARY_DIR}/resources)

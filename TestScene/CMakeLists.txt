@@ -3,13 +3,13 @@ find_package(DeepSea COMPONENTS ApplicationSDL RenderBootstrap Scene REQUIRED)
 set(shaderConfigs)
 set(source TestScene.c LightData.cpp LightData.h LightData.fbs TestSceneCube.msl
 	TestSceneGround.msl)
-if (TARGET deepsea_render_opengl)
+if (TARGET DeepSea::RenderOpenGL)
 	list(APPEND shaderConfigs glsl-1.1 glsl-1.5 glsl-es-1.0 glsl-es-3.0)
 endif()
-if (TARGET deepsea_render_vulkan)
+if (TARGET DeepSea::RenderVulkan)
 	list(APPEND shaderConfigs spirv-1.0)
 endif()
-if (TARGET deepsea_render_metal)
+if (TARGET DeepSea::RenderMetal)
 	if (IOS)
 		list(APPEND shaderConfigs metal-ios-1.1)
 	else()
@@ -19,13 +19,13 @@ endif()
 
 add_test_executable(TestSceneApp ${source})
 
-target_link_libraries(TestSceneApp PRIVATE
-	deepsea_render_bootstrap deepsea_scene deepsea_application_sdl)
+target_link_libraries(TestSceneApp
+	PRIVATE DeepSea::RenderBootstrap DeepSea::Scene DeepSea::ApplicationSDL)
 target_include_directories(TestSceneApp PRIVATE ${FLATBUFFERS_INCLUDE_DIRS})
-ds_link_main_lib(TestSceneApp deepsea_application_sdl_main)
+ds_link_main_lib(TestSceneApp DeepSea::ApplicationSDLMain)
 
-if (TARGET deepsea_easy_profiler)
-	target_link_libraries(TestSceneApp PRIVATE deepsea_easy_profiler)
+if (TARGET DeepSea::EasyProfiler)
+	target_link_libraries(TestSceneApp PRIVATE DeepSea::EasyProfiler)
 	target_compile_definitions(TestSceneApp PRIVATE DS_HAS_EASY_PROFILER=1)
 endif()
 
