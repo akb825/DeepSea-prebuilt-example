@@ -10,8 +10,8 @@ set BUILD_DIR=%DEEPSEA_DIR%\build
 set /P FLAGS=<"%DIR%scripts\flags"
 set PLATFORM=native
 set CMAKE_ARGS=
-set CMAKE_PLATFORM_ARGS=-A Win32
-set WIN_PLATFORM=win32
+set CMAKE_PLATFORM_ARGS=-A x64
+set WIN_PLATFORM=win64
 
 :parseArgs
 if not "%1"=="" (
@@ -73,6 +73,6 @@ exit /B !ERRORLEVEL!
 	echo.
 	echo Options:
 	echo -p, --platform ^<platform^>    The platform to build for. Valid platforms are:
-	echo                              - win32 (default)
-	echo                              - win64
+	echo                              - win32
+	echo                              - win64 (default)
 	exit /B !ERRORLEVEL!

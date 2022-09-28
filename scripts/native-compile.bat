@@ -4,7 +4,7 @@ set REPO_DIR=%cd%
 set INSTALL_PREFIX=%INSTALL_DIR%\%WIN_PLATFORM%
 
 REM Install to an intermediate location first to ensure absolute paths aren't used.
-cmake .. -DCMAKE_INSTALL_PREFIX=install -DCMAKE_C_FLAGS=/MP %*
+cmake .. -DCMAKE_INSTALL_PREFIX=install %*
 if %ERRORLEVEL% neq 0 exit /B %ERRORLEVEL%
 cmake --build . --config Debug
 if %ERRORLEVEL% neq 0 exit /B %ERRORLEVEL%
