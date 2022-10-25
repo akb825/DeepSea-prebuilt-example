@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Aaron Barany
+# Copyright 2020-2022 Aaron Barany
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,4 +62,4 @@ def convertLightData(convertContext, data):
 	return builder.Output()
 
 def deepSeaSceneExtension(convertContext):
-	convertContext.addGlobalDataType('LightData', convertLightData)
+	convertContext.addItemListType('LightData', convertLightData)
