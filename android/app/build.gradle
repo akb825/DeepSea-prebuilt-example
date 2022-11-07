@@ -31,28 +31,24 @@ android {
     // Only include libraries that aren't referenced directly in CMake.
     task copyArm32Libraries(type: Copy) {
         from ("${projectDir}/../../install/android-armeabi-v7a/lib") {
-            include "libhidapi.so"
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/armeabi-v7a"
     }
     task copyArm64Libraries(type: Copy) {
         from ("${projectDir}/../../install/android-arm64-v8a/lib") {
-            include "libhidapi.so"
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/arm64-v8a"
     }
     task copyX86Libraries(type: Copy) {
         from ("${projectDir}/../../install/android-x86/lib") {
-            include "libhidapi.so"
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/x86"
     }
     task copyX86_64Libraries(type: Copy) {
         from ("${projectDir}/../../install/android-x86_64/lib") {
-            include "libhidapi.so"
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/x86_64"
@@ -70,6 +66,7 @@ android {
             applicationIdSuffix ".vectordraw"
             versionNameSuffix "-TestVectorDraw"
             resValue "string", "app_name", "TestVectorDraw"
+            resValue "string", "main_lib_name", "TestVectorDrawApp"
         }
         TestScene {
             externalNativeBuild {
@@ -82,6 +79,7 @@ android {
             applicationIdSuffix ".scene"
             versionNameSuffix "-TestScene"
             resValue "string", "app_name", "TestScene"
+            resValue "string", "main_lib_name", "TestSceneApp"
         }
     }
 }
@@ -94,7 +92,4 @@ preBuild.dependsOn(copyX86_64Libraries)
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.5.1'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
