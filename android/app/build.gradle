@@ -82,6 +82,7 @@ android {
             resValue "string", "main_lib_name", "TestSceneApp"
         }
     }
+    namespace 'com.akb825.deepsea'
 }
 
 preBuild.dependsOn(copyArm32Libraries)
@@ -91,5 +92,5 @@ preBuild.dependsOn(copyX86_64Libraries)
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.5.1'
+    implementation 'androidx.appcompat:appcompat:1.6.0'
 }
