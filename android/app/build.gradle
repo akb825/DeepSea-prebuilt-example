@@ -29,26 +29,26 @@ android {
         }
     }
     // Only include libraries that aren't referenced directly in CMake.
-    task copyArm32Libraries(type: Copy) {
-        from ("${projectDir}/../../install/android-armeabi-v7a/lib") {
+    tasks.register('copyArm32Libraries', Copy) {
+        from("${projectDir}/../../install/android-armeabi-v7a/lib") {
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/armeabi-v7a"
     }
-    task copyArm64Libraries(type: Copy) {
-        from ("${projectDir}/../../install/android-arm64-v8a/lib") {
+    tasks.register('copyArm64Libraries', Copy) {
+        from("${projectDir}/../../install/android-arm64-v8a/lib") {
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/arm64-v8a"
     }
-    task copyX86Libraries(type: Copy) {
-        from ("${projectDir}/../../install/android-x86/lib") {
+    tasks.register('copyX86Libraries', Copy) {
+        from("${projectDir}/../../install/android-x86/lib") {
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/x86"
     }
-    task copyX86_64Libraries(type: Copy) {
-        from ("${projectDir}/../../install/android-x86_64/lib") {
+    tasks.register('copyX86_64Libraries', Copy) {
+        from("${projectDir}/../../install/android-x86_64/lib") {
             include "libSDL2.so"
         }
         into "${projectDir}/src/main/jniLibs/x86_64"
@@ -59,6 +59,7 @@ android {
             externalNativeBuild {
                 cmake {
                     targets "TestVectorDrawApp"
+                    arguments "-DDEEPSEA_ANDROID_ASSETS_DIR=src/TestVectorDraw/assets"
                 }
             }
             dimension "tester"
@@ -72,6 +73,7 @@ android {
             externalNativeBuild {
                 cmake {
                     targets "TestSceneApp"
+                    arguments "-DDEEPSEA_ANDROID_ASSETS_DIR=src/TestSceneApp/assets"
                 }
             }
             dimension "tester"
@@ -91,7 +93,6 @@ preBuild.dependsOn(copyX86Libraries)
 preBuild.dependsOn(copyX86_64Libraries)
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.7.0'
 }
 
