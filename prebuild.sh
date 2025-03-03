@@ -13,7 +13,7 @@ FLAGS=`cat "$DIR/scripts/flags"`
 PLATFORM=native
 CMAKE_ARGS=
 ANDROID_NDK=
-ANDROID_VERSION=android-18
+ANDROID_VERSION=android-24
 
 function printHelp {
 	echo "Usage: `basename "$0"` [options] [CMake args...]"
