@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Aaron Barany
+ * Copyright 2018-2025 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -621,6 +621,13 @@ int dsMain(int argc, const char** argv)
 	rendererOptions.depthBits = 0;
 	rendererOptions.stencilBits = 0;
 	rendererOptions.surfaceSamples = 4;
+	if (!dsSDLApplication_prepareRendererOptions(
+			&rendererOptions, dsRenderBootstrap_rendererID(rendererType)))
+	{
+		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't setup renderer options.");
+		return 0;
+	}
+
 	dsRenderer* renderer = dsRenderBootstrap_createRenderer(rendererType,
 		(dsAllocator*)&renderAllocator, &rendererOptions);
 	if (!renderer)
