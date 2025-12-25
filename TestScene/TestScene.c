@@ -64,8 +64,8 @@ typedef struct TestScene
 	dsSceneTransformNode* secondaryTransform;
 	dsScene* scene;
 	dsView* view;
-	dsSceneThreadManager* threadManager;
 	dsThreadPool* threadPool;
+	dsSceneThreadManager* threadManager;
 
 	uint64_t invalidatedFrame;
 	bool ignoreTime;
@@ -188,10 +188,10 @@ static void update(dsApplication* application, float lastFrameTime, void* userDa
 	else
 	{
 		// radians/s
-		const float rate = (float)M_PI_2;
+		const float rate = M_PI_2f;
 		testScene->rotation += lastFrameTime*rate;
-		while (testScene->rotation > 2*M_PI)
-			testScene->rotation = testScene->rotation - (float)(2*M_PI);
+		while (testScene->rotation > 2*M_PIf)
+			testScene->rotation = testScene->rotation - 2*M_PIf;
 	}
 
 	dsMatrix44f transform;
@@ -309,7 +309,7 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 	}
 
 	testScene->scene = dsScene_loadResource(allocator, NULL, loadContext, scratchData, NULL, NULL,
-		dsFileResourceType_Embedded, "scene.dss");
+		NULL, dsFileResourceType_Embedded, "scene.dss");
 	if (!testScene->scene)
 	{
 		DS_LOG_ERROR_F("TestScene", "Couldn't load scene: %s", dsErrorString(errno));
@@ -329,7 +329,7 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 	viewSurfaces[1].surface = surface;
 	viewSurfaces[1].windowFramebuffer = true;
 
-	testScene->view = dsView_loadResource(testScene->scene, allocator, NULL, scratchData,
+	testScene->view = dsView_loadResource(allocator, "window", testScene->scene, NULL, scratchData,
 		viewSurfaces, DS_ARRAY_SIZE(viewSurfaces), surface->width, surface->height,
 		surface->rotation, NULL, NULL, dsFileResourceType_Embedded, "view.dsv");
 	dsSceneLoadContext_destroy(loadContext);
@@ -367,7 +367,7 @@ static void shutdown(TestScene* testScene)
 	DS_VERIFY(dsView_destroy(testScene->view));
 	dsScene_destroy(testScene->scene);
 	dsSceneThreadManager_destroy(testScene->threadManager);
-	DS_VERIFY(dsThreadPool_destroy(testScene->threadPool));
+	dsThreadPool_destroy(testScene->threadPool);
 	dsSceneResources_freeRef(testScene->resources);
 	DS_VERIFY(dsWindow_destroy(testScene->window));
 }

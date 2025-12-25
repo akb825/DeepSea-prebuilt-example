@@ -314,7 +314,7 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	DS_VERIFY(dsRenderer_makeOrtho(&projection, renderer, 0.0f, size.x, 0.0f, size.y, 0.0f, 1.0f));
 	DS_VERIFY(dsRenderSurface_makeRotationMatrix44(&surfaceRotation,
 		testVectorDraw->window->surface->rotation));
-	dsMatrix44_mul(matrix, surfaceRotation, projection);
+	dsMatrix44f_mul(&matrix, &surfaceRotation, &projection);
 
 	dsVectorShaders* shaders;
 	if (testVectorDraw->wireframe)
@@ -637,7 +637,6 @@ int dsMain(int argc, const char** argv)
 	}
 
 	dsRenderer_setVSync(renderer, dsVSync_TripleBuffer);
-	dsRenderer_setDefaultAnisotropy(renderer, renderer->maxAnisotropy);
 #if DS_DEBUG
 	dsRenderer_setExtraDebugging(renderer, true);
 #endif
