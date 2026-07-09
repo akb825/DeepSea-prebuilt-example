@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 Aaron Barany
+ * Copyright 2019-2026 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,9 +63,10 @@ typedef struct dsLightData
 } dsLightData;
 
 static void dsLightData_commit(dsSceneItemList* itemList, const dsView* view,
-	dsCommandBuffer* commandBuffer)
+	dsCommandBuffer* commandBuffer, const dsViewRenderPassParams* renderPassParams)
 {
 	DS_ASSERT(itemList);
+	DS_UNUSED(renderPassParams);
 	dsLightData* lightData = (dsLightData*)itemList;
 	dsVector4f direction =
 		{{lightData->direction.x, lightData->direction.y, lightData->direction.z, 0.0f}};
@@ -190,6 +191,7 @@ dsSceneItemList* dsLightData_create(dsAllocator* allocator, const char* name,
 
 	itemList->allocator = dsAllocator_keepPointer(allocator);
 	itemList->type = &itemListType;
+	itemList->viewFilter = nullptr;
 	itemList->name = DS_ALLOCATE_OBJECT_ARRAY(&bufferAlloc, char, nameLen);
 	DS_ASSERT(itemList->name);
 	memcpy((void*)itemList->name, name, nameLen);

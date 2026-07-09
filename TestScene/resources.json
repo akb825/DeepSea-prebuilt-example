@@ -12,28 +12,15 @@
 	},
 	{
 		"type": "ShaderVariableGroupDesc",
-		"name": "viewTransformDesc",
-		"elements":
-		[
-			{"name": "view", "type": "Mat4"},
-			{"name": "camera", "type": "Mat4"},
-			{"name": "projection", "type": "Mat4"},
-			{"name": "viewProjection", "type": "Mat4"},
-			{"name": "projectionInv", "type": "Mat4"},
-			{"name": "screenRotation", "type": "Vec4"},
-			{"name": "clipSpaceTexCoordTransform", "type": "Vec3", "count": 2},
-			{"name": "screenSize", "type": "IVec2"}
-		]
-	},
-	{
-		"type": "ShaderVariableGroupDesc",
 		"name": "instanceTransformDesc",
 		"elements":
 		[
 			{"name": "world", "type": "Mat4"},
 			{"name": "worldView", "type": "Mat4"},
 			{"name": "worldViewInvTrans", "type": "Mat3"},
-			{"name": "worldViewProj", "type": "Mat4"}
+			{"name": "worldViewProj", "type": "Mat4"},
+			{"name": "framebufferSize", "type": "IVec4"},
+			{"name": "framebufferRotation", "type": "Vec4"}
 		]
 	},
 	{
@@ -52,13 +39,7 @@
 		"elements":
 		[
 			{
-				"name": "ViewTransformData",
-				"type": "VariableGroup",
-				"binding": "Global",
-				"shaderVariableGroupDesc": "viewTransformDesc"
-			},
-			{
-				"name": "InstanceTransformData",
+				"name": "dsInstanceTransformData",
 				"type": "VariableGroup",
 				"binding": "Instance",
 				"shaderVariableGroupDesc": "instanceTransformDesc"
@@ -82,13 +63,7 @@
 		"elements":
 		[
 			{
-				"name": "ViewTransformData",
-				"type": "VariableGroup",
-				"binding": "Global",
-				"shaderVariableGroupDesc": "viewTransformDesc"
-			},
-			{
-				"name": "InstanceTransformData",
+				"name": "dsInstanceTransformData",
 				"type": "VariableGroup",
 				"binding": "Instance",
 				"shaderVariableGroupDesc": "instanceTransformDesc"
@@ -171,7 +146,7 @@
 		"modelGeometry":
 		[
 			{
-				"path": "@srcDir@/cube.obj",
+				"path": "cube.obj",
 				"vertexFormat":
 				[
 					[
@@ -225,9 +200,9 @@
 				"nodeType": "TransformNode",
 				"transformList":
 				[
-					{"type": "Translate", "value": [4.0, -1.0, 3.0]},
+					{"type": "Scale", "value": [1.5, 0.75, 0.5]},
 					{"type": "Rotate", "value": [20.0, -40.0, 60.0]},
-					{"type": "Scale", "value": [1.5, 0.75, 0.5]}
+					{"type": "Translate", "value": [4.0, -1.0, 3.0]}
 				],
 				"children":
 				[
@@ -249,8 +224,8 @@
 		"nodeType": "TransformNode",
 		"transformList":
 		[
-			{"type": "Scale", "value": [10.0, 1.0, 10.0]},
-			{"type": "Translate", "value": [0.0, -5.0, 0.0]}
+			{"type": "Translate", "value": [0.0, -5.0, 0.0]},
+			{"type": "Scale", "value": [10.0, 1.0, 10.0]}
 		],
 		"children":
 		[
@@ -259,7 +234,7 @@
 				"modelGeometry":
 				[
 					{
-						"path": "@srcDir@/ground.gltf",
+						"path": "ground.gltf",
 						"vertexFormat":
 						[
 							[
@@ -311,15 +286,16 @@
 	{
 		"type": "SceneNode",
 		"name": "secondaryTransform",
-		"nodeType": "TransformNode",
+		"nodeType": "DynamicTransformNode",
+		"translate": [-3.0, 2.0, 5.0],
 		"children":
 		[
 			{
 			"nodeType": "TransformNode",
 				"transformList":
 				[
-					{"type": "Rotate", "value": [-20.0, 70.0, 35.0]},
-					{"type": "Translate", "value": [5.0, 4.0, -2.0]}
+					{"type": "Translate", "value": [5.0, 4.0, -2.0]},
+					{"type": "Rotate", "value": [-20.0, 70.0, 35.0]}
 				],
 				"children": [{"nodeType": "ReferenceNode", "ref": "innerOuterCubeNode"}]
 			}
@@ -328,7 +304,7 @@
 	{
 		"type": "SceneNode",
 		"name": "primaryTransform",
-		"nodeType": "TransformNode",
+		"nodeType": "DynamicTransformNode",
 		"children":
 		[
 			{"nodeType": "ReferenceNode", "ref": "innerOuterCubeNode"},

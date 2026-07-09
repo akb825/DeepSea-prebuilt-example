@@ -1,8 +1,8 @@
 find_package(DeepSea COMPONENTS ApplicationSDL RenderBootstrap Scene REQUIRED)
 
 set(shaderConfigs)
-set(source TestScene.c LightData.cpp LightData.h LightData.fbs TestSceneCube.msl
-	TestSceneGround.msl)
+set(source TestScene.c LightData.cpp LightData.h TestSceneUpdate.c TestSceneUpdate.h LightData.fbs
+	TestSceneCube.msl TestSceneGround.msl)
 if (TARGET DeepSea::RenderOpenGL)
 	list(APPEND shaderConfigs glsl-1.1 glsl-1.5 glsl-es-1.0 glsl-es-3.0)
 endif()
@@ -46,8 +46,6 @@ add_custom_target(TestSceneApp_prepare
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/TestSceneCube.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/TestSceneGround.msl
 	OUTPUT TestScene.mslb CONFIG ${shaderConfigs} OUTPUT_DIR ${shaderDir}
-	DEPENDS_RECURSE ${DEEPSEA_INCLUDE_DIR}/DeepSea/Render/*.mslh
-		${DEEPSEA_INCLUDE_DIR}/DeepSea/Scene/*.mslh
 	INCLUDE ${DEEPSEA_INCLUDE_DIR})
 ds_compile_shaders_target(TestSceneApp_shaders shaders
 	DEPENDS TestSceneApp_prepare)
@@ -68,7 +66,8 @@ ds_scene_resource_shader_module_config(testSceneModule TestScene.mslb ${assetsDi
 ds_configure_file(resources.json ${configDir}/resources.json CONFIG_VAR testSceneModule @ONLY)
 
 ds_create_scene_resources(resources FILE ${configDir}/resources.json
-	OUTPUT ${assetsDir}/resources.dssr DEPENDS ${sharedDir}/SimpleTexture.png)
+	OUTPUT ${assetsDir}/resources.dssr DEPENDS ${sharedDir}/SimpleTexture.png
+	INPUT_DIRECTORY ${srcDir})
 ds_create_scene_resources_target(TestSceneApp_scene_resources resources
 	DEPENDS TestSceneApp_shaders)
 
@@ -79,7 +78,7 @@ ds_create_scene_target(TestSceneApp_scene scene DEPENDS TestSceneApp_prepare)
 ds_create_view(view FILE ${CMAKE_CURRENT_SOURCE_DIR}/view.json OUTPUT ${assetsDir}/view.dsv)
 ds_create_view_target(TestSceneApp_view view DEPENDS TestSceneApp_prepare)
 
-# Copy 
+# Copy
 ds_build_assets_dir(finalAssetsDir TestSceneApp)
 set(finalAssetsDir ${finalAssetsDir}/TestScene-assets)
 add_custom_target(TestSceneApp_assets

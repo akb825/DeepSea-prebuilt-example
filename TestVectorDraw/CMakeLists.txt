@@ -3,8 +3,11 @@ find_package(DeepSea COMPONENTS ApplicationSDL RenderBootstrap VectorDraw REQUIR
 set(shaderConfigs)
 set(srgbShaderConfigs)
 set(source TestVectorDraw.c
-	VectorElementFill.msl VectorElementLine.msl VectorElementImage.msl VectorElementText.msl
-	VectorElementFillSRGB.msl VectorElementLineSRGB.msl VectorElementTextSRGB.msl)
+	TextureIcon.msl
+	VectorElementFill.msl VectorElementLine.msl VectorElementImage.msl VectorElementTextColor.msl
+		 VectorElementTextGradient.msl
+	VectorElementFillSRGB.msl VectorElementLineSRGB.msl VectorElementTextColorSRGB.msl
+		VectorElementTextGradientSRGB.msl)
 if (TARGET DeepSea::RenderOpenGL)
 	list(APPEND shaderConfigs glsl-1.1 glsl-1.5 glsl-4.0 glsl-es-1.0 glsl-es-3.0 glsl-es-3.2)
 	list(APPEND srgbShaderConfigs glsl-1.5 glsl-4.0 glsl-es-3.0 glsl-es-3.2)
@@ -29,7 +32,7 @@ target_link_libraries(TestVectorDrawApp
 	PRIVATE DeepSea::RenderBootstrap DeepSea::ApplicationSDL DeepSea::VectorDraw)
 ds_link_main_lib(TestVectorDrawApp DeepSea::ApplicationSDLMain)
 
-set(shaderDir ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+ds_config_binary_dir(shaderDir shaders)
 set(resourceDir ${CMAKE_CURRENT_BINARY_DIR}/resources)
 set(imageDir ${CMAKE_CURRENT_BINARY_DIR}/images)
 add_custom_target(TestVectorDrawApp_prepare
@@ -38,16 +41,14 @@ add_custom_target(TestVectorDrawApp_prepare
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${imageDir})
 
 # Shaders
-set(shaderOptions OUTPUT_DIR ${shaderDir}
-	INCLUDE ${DEEPSEA_INCLUDE_DIR}
-	DEPENDENCY_RECURSE ${DEEPSEA_INCLUDE_DIR}/DeepSea/Render/*.mslh
-		${DEEPSEA_INCLUDE_DIR}/DeepSea/Text/*.mslh
-		${DEEPSEA_INCLUDE_DIR}/DeepSea/VectorDraw/*.mslh)
+# Strip symbols and optimize to verify that this works with non-trivial shaders.
+set(shaderOptions OUTPUT_DIR ${shaderDir} INCLUDE ${DEEPSEA_INCLUDE_DIR})
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFill.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementLine.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextColor.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextGradient.msl
+	${CMAKE_CURRENT_SOURCE_DIR}/TextureIcon.msl
 	OUTPUT TestVectorDraw.mslb
 	CONFIG ${shaderConfigs} ${shaderOptions})
 ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFillSRGB.msl
@@ -55,7 +56,8 @@ ds_compile_shaders(shaders FILE ${CMAKE_CURRENT_SOURCE_DIR}/VectorElementFillSRG
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementImage.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextColorSRGB.msl
 	${CMAKE_CURRENT_SOURCE_DIR}/VectorElementTextGradientSRGB.msl
-	OUTPUT TestVectorDrawAppSRGB.mslb
+	${CMAKE_CURRENT_SOURCE_DIR}/TextureIcon.msl
+	OUTPUT TestVectorDrawSRGB.mslb
 	CONFIG ${srgbShaderConfigs} ${shaderOptions})
 ds_compile_shaders_target(TestVectorDrawApp_shaders shaders
 	DEPENDS TestVectorDrawApp_prepare)

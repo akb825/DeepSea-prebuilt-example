@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 Aaron Barany
+ * Copyright 2018-2026 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,19 @@
 #include <DeepSea/Render/Resources/GfxBuffer.h>
 #include <DeepSea/Render/Resources/GfxFormat.h>
 #include <DeepSea/Render/Resources/Material.h>
+#include <DeepSea/Render/Resources/MaterialDesc.h>
 #include <DeepSea/Render/Resources/ResourceManager.h>
 #include <DeepSea/Render/Resources/Shader.h>
 #include <DeepSea/Render/Resources/ShaderModule.h>
+#include <DeepSea/Render/Resources/ShaderVariableGroupDesc.h>
 #include <DeepSea/Render/Resources/VertexFormat.h>
-#include <DeepSea/Render/CommandBuffer.h>
-#include <DeepSea/Render/CommandBufferPool.h>
 #include <DeepSea/Render/Renderer.h>
 #include <DeepSea/Render/RenderPass.h>
 #include <DeepSea/Render/RenderSurface.h>
 
 #include <DeepSea/RenderBootstrap/RenderBootstrap.h>
+
+#include <DeepSea/Text/TextureTextIcons.h>
 
 #include <DeepSea/VectorDraw/VectorImage.h>
 #include <DeepSea/VectorDraw/VectorResources.h>
@@ -65,7 +67,6 @@ typedef struct TestVectorDraw
 {
 	dsAllocator* allocator;
 	dsRenderer* renderer;
-	dsCommandBufferPool* setupCommands;
 	dsWindow* window;
 	dsFramebuffer* framebuffer;
 	dsRenderPass* renderPass;
@@ -73,6 +74,9 @@ typedef struct TestVectorDraw
 	dsVectorShaders* shaders;
 	dsVectorShaders* wireframeShaders;
 	dsMaterial* material;
+	dsShaderVariableGroupDesc* textureIconDataDesc;
+	dsMaterialDesc* textureIconMaterialDesc;
+	dsShader* textureIconShader;
 	dsVectorResources* vectorResources;
 	dsVectorImage** vectorImages;
 
@@ -125,7 +129,8 @@ const char* vectorImageFiles[] =
 	"text-autoformat.dsvi",
 	"tspan.dsvi",
 	"text-materials.dsvi",
-	"text-materials-compare.dsvi"
+	"text-materials-compare.dsvi",
+	"text-icons.dsvi"
 };
 
 static void printHelp(const char* programPath)
@@ -196,8 +201,8 @@ static void prevImage(TestVectorDraw* testVectorDraw)
 	testVectorDraw->updateImage = true;
 }
 
-static bool processEvent(dsApplication* application, dsWindow* window, const dsEvent* event,
-	void* userData)
+static bool processEvent(
+	dsApplication* application, dsWindow* window, const dsEvent* event, void* userData)
 {
 	DS_UNUSED(application);
 
@@ -225,6 +230,12 @@ static bool processEvent(dsApplication* application, dsWindow* window, const dsE
 					return false;
 				case dsKeyCode_W:
 					testVectorDraw->wireframe = !testVectorDraw->wireframe;
+					return false;
+				case dsKeyCode_V:
+					if (testVectorDraw->renderer->vsync == dsVSync_Disabled)
+						dsRenderer_setVSync(testVectorDraw->renderer, dsVSync_TripleBuffer);
+					else
+						dsRenderer_setVSync(testVectorDraw->renderer, dsVSync_Disabled);
 					return false;
 				case dsKeyCode_ACBack:
 					dsApplication_quit(application, 0);
@@ -275,14 +286,6 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	dsRenderer* renderer = testVectorDraw->renderer;
 	dsCommandBuffer* commandBuffer = renderer->mainCommandBuffer;
 
-	if (testVectorDraw->setupCommands)
-	{
-		dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->commandBuffers[0];
-		DS_VERIFY(dsCommandBuffer_submit(commandBuffer, setupCommands));
-		DS_VERIFY(dsCommandBufferPool_destroy(testVectorDraw->setupCommands));
-		testVectorDraw->setupCommands = NULL;
-	}
-
 	if (testVectorDraw->updateImage)
 	{
 		DS_VERIFY(dsVectorImage_updateText(
@@ -296,7 +299,7 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	clearValue.colorValue.floatValue.b = 1.0f;
 	clearValue.colorValue.floatValue.a = 1.0f;
 	DS_VERIFY(dsRenderPass_begin(testVectorDraw->renderPass, commandBuffer,
-		testVectorDraw->framebuffer, NULL, &clearValue, 1, false));
+		testVectorDraw->framebuffer, NULL, NULL, &clearValue, 1, false));
 
 	dsVectorImage* image = testVectorDraw->vectorImages[testVectorDraw->curVectorImage];
 
@@ -310,19 +313,19 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 	else
 		size.x = size.y*windowAspect;
 
-	dsMatrix44f projection, surfaceRotation, matrix;
+	dsMatrix44f projection, surfaceRotation, modelViewProjection;
 	DS_VERIFY(dsRenderer_makeOrtho(&projection, renderer, 0.0f, size.x, 0.0f, size.y, 0.0f, 1.0f));
-	DS_VERIFY(dsRenderSurface_makeRotationMatrix44(&surfaceRotation,
-		testVectorDraw->window->surface->rotation));
-	dsMatrix44f_mul(&matrix, &surfaceRotation, &projection);
+	DS_VERIFY(dsRenderSurface_makeRotationMatrix44(
+		&surfaceRotation, testVectorDraw->window->surface->rotation));
+	dsMatrix44f_mul(&modelViewProjection, &surfaceRotation, &projection);
 
 	dsVectorShaders* shaders;
 	if (testVectorDraw->wireframe)
 		shaders = testVectorDraw->wireframeShaders;
 	else
 		shaders = testVectorDraw->shaders;
-	DS_VERIFY(dsVectorImage_draw(image, commandBuffer, shaders, testVectorDraw->material, &matrix,
-		NULL, NULL));
+	DS_VERIFY(dsVectorImage_draw(image, commandBuffer, shaders, testVectorDraw->material,
+		&modelViewProjection, NULL, NULL, NULL));
 
 	DS_VERIFY(dsRenderPass_end(testVectorDraw->renderPass, commandBuffer));
 }
@@ -336,24 +339,6 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 	dsResourceManager* resourceManager = renderer->resourceManager;
 	testVectorDraw->allocator = allocator;
 	testVectorDraw->renderer = renderer;
-
-	testVectorDraw->setupCommands = dsCommandBufferPool_create(renderer, allocator,
-		dsCommandBufferUsage_Standard);
-	if (!testVectorDraw->setupCommands ||
-		!dsCommandBufferPool_createCommandBuffers(testVectorDraw->setupCommands, 1))
-	{
-		DS_LOG_ERROR_F("TestText", "Couldn't create setup command buffer: %s",
-			dsErrorString(errno));
-		DS_PROFILE_FUNC_RETURN(false);
-	}
-
-	dsCommandBuffer* setupCommands = testVectorDraw->setupCommands->commandBuffers[0];
-	if (!dsCommandBuffer_begin(setupCommands))
-	{
-		DS_LOG_ERROR_F("TestText", "Couldn't begin setup command buffer: %s",
-			dsErrorString(errno));
-		DS_PROFILE_FUNC_RETURN(false);
-	}
 
 	dsEventResponder responder = {&processEvent, testVectorDraw, 0, 0};
 	DS_VERIFY(dsApplication_addEventResponder(application, &responder));
@@ -447,6 +432,40 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		DS_PROFILE_FUNC_RETURN(false);
 	}
 
+	testVectorDraw->textureIconDataDesc = dsTextureTextIcons_createShaderVariableGroupDesc(
+		resourceManager, allocator);
+	if (!testVectorDraw->textureIconDataDesc)
+	{
+		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't create shader variable group description: %s",
+			dsErrorString(errno));
+		DS_PROFILE_FUNC_RETURN(false);
+	}
+
+	dsMaterialElement textureIconMaterialElems[] =
+	{
+		{dsTextureTextIcons_textureName, dsMaterialType_Texture, 0, NULL,
+			dsMaterialBinding_Instance, 0},
+		{dsTextureTextIcons_iconDataName, dsMaterialType_VariableGroup, 0,
+			testVectorDraw->textureIconDataDesc, dsMaterialBinding_Instance, 0}
+	};
+	testVectorDraw->textureIconMaterialDesc = dsMaterialDesc_create(resourceManager, allocator,
+		textureIconMaterialElems, DS_ARRAY_SIZE(textureIconMaterialElems));
+	if (!testVectorDraw->textureIconMaterialDesc)
+	{
+		DS_LOG_ERROR_F(
+			"TestVectorDraw", "Couldn't create material description: %s", dsErrorString(errno));
+		DS_PROFILE_FUNC_RETURN(false);
+	}
+
+	testVectorDraw->textureIconShader = dsShader_createName(resourceManager, allocator,
+		testVectorDraw->shaderModule->shaderModule, "TextureIcon",
+		testVectorDraw->textureIconMaterialDesc);
+	if (!testVectorDraw->textureIconShader)
+	{
+		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't create shader: %s", dsErrorString(errno));
+		DS_PROFILE_FUNC_RETURN(false);
+	}
+
 	testVectorDraw->material = dsMaterial_create(resourceManager, allocator,
 		testVectorDraw->shaderModule->materialDesc);
 	if (!testVectorDraw->material)
@@ -475,15 +494,6 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		DS_PROFILE_FUNC_RETURN(false);
 	}
 
-	testVectorDraw->vectorResources = dsVectorResources_loadResource(allocator, NULL,
-		resourceManager, dsFileResourceType_Embedded, path, NULL);
-	if (!testVectorDraw->vectorResources)
-	{
-		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't load vector resources: %s",
-			dsErrorString(errno));
-		DS_PROFILE_FUNC_RETURN(false);
-	}
-
 	dsVectorScratchData* scratchData = dsVectorScratchData_create(allocator);
 	if (!scratchData)
 	{
@@ -492,10 +502,25 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 		DS_PROFILE_FUNC_RETURN(false);
 	}
 
+	dsVectorImageInitResources initResources = {resourceManager, NULL, scratchData, NULL,
+		testVectorDraw->shaderModule, NULL, NULL, 0, srgb};
+
+	testVectorDraw->vectorResources = dsVectorResources_loadResource(allocator, NULL,
+		resourceManager, NULL, dsFileResourceType_Embedded, path, NULL, &initResources, 1.0f,
+		testVectorDraw->shaders, testVectorDraw->textureIconShader, NULL);
+	if (!testVectorDraw->vectorResources)
+	{
+		DS_LOG_ERROR_F("TestVectorDraw", "Couldn't load vector resources: %s",
+			dsErrorString(errno));
+		dsVectorScratchData_destroy(scratchData);
+		DS_PROFILE_FUNC_RETURN(false);
+	}
+
+	initResources.resources = &testVectorDraw->vectorResources;
+	initResources.resourceCount = 1;
+
 	dsTimer timer = dsTimer_create();
 	dsVector2f targetImageSize2f = {{targetImageSize, targetImageSize}};
-	dsVectorImageInitResources initResources = {resourceManager, setupCommands, scratchData, NULL,
-		testVectorDraw->shaderModule, NULL, &testVectorDraw->vectorResources, 1, srgb};
 	for (uint32_t i = 0; i < testVectorDraw->vectorImageCount; ++i)
 	{
 		if (!dsPath_combine(path, sizeof(path), assetsDir, vectorImageFiles[i]))
@@ -506,7 +531,7 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 			DS_PROFILE_FUNC_RETURN(false);
 		}
 
-		double start = dsTimer_time(timer);
+		uint64_t start = dsTimer_currentTicks();
 		DS_PROFILE_DYNAMIC_SCOPE_START(vectorImageFiles[i]);
 		testVectorDraw->vectorImages[i] = dsVectorImage_loadResource(allocator, NULL,
 			&initResources, dsFileResourceType_Embedded, path, 1.0f, &targetImageSize2f);
@@ -519,17 +544,10 @@ static bool setup(TestVectorDraw* testVectorDraw, dsApplication* application,
 			DS_PROFILE_FUNC_RETURN(false);
 		}
 		DS_LOG_INFO_F("TestVectorDraw", "Loaded %s in %g s", vectorImageFiles[i],
-			dsTimer_time(timer) - start);
+			dsTimer_ticksToSeconds(timer, dsTimer_currentTicks() - start));
 	}
 
 	dsVectorScratchData_destroy(scratchData);
-
-	if (!dsCommandBuffer_end(setupCommands))
-	{
-		DS_LOG_ERROR_F("TestText", "Couldn't end setup command buffer: %s",
-			dsErrorString(errno));
-		DS_PROFILE_FUNC_RETURN(false);
-	}
 	DS_PROFILE_FUNC_RETURN(true);
 }
 
@@ -543,13 +561,15 @@ static void shutdown(TestVectorDraw* testVectorDraw)
 	}
 	DS_VERIFY(dsVectorResources_destroy(testVectorDraw->vectorResources));
 	dsMaterial_destroy(testVectorDraw->material);
+	DS_VERIFY(dsShader_destroy(testVectorDraw->textureIconShader));
+	DS_VERIFY(dsMaterialDesc_destroy(testVectorDraw->textureIconMaterialDesc));
+	DS_VERIFY(dsShaderVariableGroupDesc_destroy(testVectorDraw->textureIconDataDesc));
 	DS_VERIFY(dsVectorShaders_destroy(testVectorDraw->wireframeShaders));
 	DS_VERIFY(dsVectorShaders_destroy(testVectorDraw->shaders));
 	DS_VERIFY(dsVectorShaderModule_destroy(testVectorDraw->shaderModule));
 	DS_VERIFY(dsRenderPass_destroy(testVectorDraw->renderPass));
 	DS_VERIFY(dsFramebuffer_destroy(testVectorDraw->framebuffer));
 	DS_VERIFY(dsWindow_destroy(testVectorDraw->window));
-	DS_VERIFY(dsCommandBufferPool_destroy(testVectorDraw->setupCommands));
 }
 
 int dsMain(int argc, const char** argv)
@@ -607,6 +627,9 @@ int dsMain(int argc, const char** argv)
 
 	DS_LOG_INFO_F("TestVectorDraw", "Render using %s",
 		dsRenderBootstrap_rendererName(rendererType));
+	DS_LOG_INFO("TestVectorDraw", "Use left and right arrows to cycle through test cases.");
+	DS_LOG_INFO("TestVectorDraw", "Press 'W' to toggle wireframe.");
+	DS_LOG_INFO("TestVectorDraw", "Press 'V' to toggle vsync.");
 
 	dsSystemAllocator renderAllocator;
 	DS_VERIFY(dsSystemAllocator_initialize(&renderAllocator, DS_ALLOCATOR_NO_LIMIT));

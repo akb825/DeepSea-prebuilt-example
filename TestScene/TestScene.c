@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 Aaron Barany
+ * Copyright 2019-2026 Aaron Barany
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "LightData.h"
+#include "TestSceneUpdate.h"
 
 #include <DeepSea/Application/Application.h>
 #include <DeepSea/Application/Window.h>
@@ -37,12 +38,12 @@
 #include <DeepSea/RenderBootstrap/RenderBootstrap.h>
 
 #include <DeepSea/Scene/Nodes/SceneNode.h>
-#include <DeepSea/Scene/Nodes/SceneTransformNode.h>
 #include <DeepSea/Scene/Scene.h>
 #include <DeepSea/Scene/SceneLoadContext.h>
 #include <DeepSea/Scene/SceneLoadScratchData.h>
 #include <DeepSea/Scene/SceneResources.h>
 #include <DeepSea/Scene/SceneThreadManager.h>
+#include <DeepSea/Scene/SceneTick.h>
 #include <DeepSea/Scene/View.h>
 #include <DeepSea/Scene/ViewTransformData.h>
 
@@ -60,15 +61,16 @@ typedef struct TestScene
 	dsRenderer* renderer;
 	dsWindow* window;
 	dsSceneResources* resources;
-	dsSceneTransformNode* primaryTransform;
-	dsSceneTransformNode* secondaryTransform;
+	dsSceneNode* primaryTransform;
+	dsSceneNode* secondaryTransform;
 	dsScene* scene;
+	dsSceneItemList* update;
 	dsView* view;
 	dsThreadPool* threadPool;
 	dsSceneThreadManager* threadManager;
 
+	dsSceneTick tick;
 	uint64_t invalidatedFrame;
-	bool ignoreTime;
 	bool secondarySceneSet;
 	bool multithreadedRendering;
 	float rotation;
@@ -98,8 +100,8 @@ static bool validateAllocator(dsAllocator* allocator, const char* name)
 	return false;
 }
 
-static bool processEvent(dsApplication* application, dsWindow* window, const dsEvent* event,
-	void* userData)
+static bool processEvent(
+	dsApplication* application, dsWindow* window, const dsEvent* event, void* userData)
 {
 	TestScene* testScene = (TestScene*)userData;
 	dsRenderer* renderer = application->renderer;
@@ -124,87 +126,74 @@ static bool processEvent(dsApplication* application, dsWindow* window, const dsE
 			if (event->type == dsAppEventType_SurfaceInvalidated)
 				dsView_update(testScene->view);
 			return true;
-		case dsAppEventType_WillEnterForeground:
-			testScene->ignoreTime = true;
-			return true;
 		case dsAppEventType_KeyDown:
-			if (event->key.repeat)
-				return false;
-
-			if (event->key.key == dsKeyCode_ACBack)
-				dsApplication_quit(application, 0);
-			else if (event->key.key == dsKeyCode_1)
+			switch (event->key.key)
 			{
-				// The key down will be re-sent when re-creating the window.
-				if (testScene->invalidatedFrame + 2 > renderer->frameNumber)
+				case dsKeyCode_Space:
+					dsTestSceneUpdate_togglePaused(testScene->update);
 					return false;
+				case dsKeyCode_1:
+				{
+					// The key down will be re-sent when re-creating the window.
+					if (testScene->invalidatedFrame + 2 > renderer->frameNumber)
+						return false;
 
-				uint32_t samples = renderer->surfaceSamples;
-				if (samples == 1)
-					samples = 4;
-				else
-					samples = 1;
-				dsRenderer_setSamples(renderer, samples);
-				DS_LOG_INFO_F("TestScene", "Togging anti-aliasing: %s",
-					samples == 1 ? "off" : "on");
-			}
-			else if (event->key.key == dsKeyCode_2)
-			{
-				if (testScene->secondarySceneSet)
-				{
-					DS_VERIFY(dsSceneNode_removeChildNode((dsSceneNode*)testScene->primaryTransform,
-						(dsSceneNode*)testScene->secondaryTransform));
-					testScene->secondarySceneSet = false;
+					uint32_t samples = renderer->surfaceSamples;
+					if (samples == 1)
+						samples = 4;
+					else
+						samples = 1;
+					dsRenderer_setSamples(renderer, samples);
+					DS_LOG_INFO_F(
+						"TestScene", "Togging anti-aliasing: %s", samples == 1 ? "off" : "on");
+					return false;
 				}
-				else
-				{
-					DS_VERIFY(dsSceneNode_addChild((dsSceneNode*)testScene->primaryTransform,
-						(dsSceneNode*)testScene->secondaryTransform));
-					testScene->secondarySceneSet = true;
-				}
-				DS_LOG_INFO_F("TestScene", "Togging secondary scene: %s",
-					testScene->secondarySceneSet ? "on" : "off");
+				case dsKeyCode_2:
+					if (testScene->secondarySceneSet)
+					{
+						DS_VERIFY(dsSceneNode_removeChildNode(
+							testScene->primaryTransform, testScene->secondaryTransform));
+						testScene->secondarySceneSet = false;
+					}
+					else
+					{
+						DS_VERIFY(dsSceneNode_addChild(
+							testScene->primaryTransform, testScene->secondaryTransform));
+						testScene->secondarySceneSet = true;
+					}
+					DS_LOG_INFO_F("TestScene", "Togging secondary scene: %s",
+						testScene->secondarySceneSet ? "on" : "off");
+					return false;
+				case dsKeyCode_3:
+					testScene->multithreadedRendering = !testScene->multithreadedRendering;
+					DS_LOG_INFO_F("TestScene", "Togging multi-threaded rendering: %s",
+						testScene->multithreadedRendering ? "on" : "off");
+					return false;
+				case dsKeyCode_V:
+					if (testScene->renderer->vsync == dsVSync_Disabled)
+						dsRenderer_setVSync(testScene->renderer, dsVSync_TripleBuffer);
+					else
+						dsRenderer_setVSync(testScene->renderer, dsVSync_Disabled);
+					return false;
+				case dsKeyCode_ACBack:
+					dsApplication_quit(application, 0);
+					return false;
+				default:
+					return true;
 			}
-			else if (event->key.key == dsKeyCode_3)
-			{
-				testScene->multithreadedRendering = !testScene->multithreadedRendering;
-				DS_LOG_INFO_F("TestScene", "Togging multi-threaded rendering: %s",
-					testScene->multithreadedRendering ? "on" : "off");
-			}
-			return false;
 		default:
 			return true;
 	}
 }
 
-static void update(dsApplication* application, float lastFrameTime, void* userData)
+static void update(
+	dsApplication* application, uint64_t absoluteTime, uint64_t lastFrameTime, void* userData)
 {
 	DS_UNUSED(application);
 
 	TestScene* testScene = (TestScene*)userData;
-
-	if (testScene->ignoreTime)
-		testScene->ignoreTime = false;
-	else
-	{
-		// radians/s
-		const float rate = M_PI_2f;
-		testScene->rotation += lastFrameTime*rate;
-		while (testScene->rotation > 2*M_PIf)
-			testScene->rotation = testScene->rotation - 2*M_PIf;
-	}
-
-	dsMatrix44f transform;
-	dsMatrix44f_makeRotate(&transform, 0, testScene->rotation, 0);
-	DS_VERIFY(dsSceneTransformNode_setTransform(testScene->primaryTransform, &transform));
-
-	dsMatrix44f_makeRotate(&transform, 0, -2.0f*testScene->rotation, 0);
-	transform.columns[3].x = -3.0f;
-	transform.columns[3].y = 2.0f;
-	transform.columns[3].z = 5.0f;
-	DS_VERIFY(dsSceneTransformNode_setTransform(testScene->secondaryTransform, &transform));
-
-	DS_VERIFY(dsScene_update(testScene->scene, lastFrameTime));
+	DS_VERIFY(dsSceneTick_update(&testScene->tick, absoluteTime, lastFrameTime));
+	DS_VERIFY(dsScene_update(testScene->scene, &testScene->tick));
 	DS_VERIFY(dsView_update(testScene->view));
 }
 
@@ -221,7 +210,8 @@ static void draw(dsApplication* application, dsWindow* window, void* userData)
 		testScene->multithreadedRendering ? testScene->threadManager : NULL));
 }
 
-static bool setup(TestScene* testScene, dsApplication* application, dsAllocator* allocator)
+static bool setup(
+	TestScene* testScene, dsApplication* application, dsAllocator* allocator, float updateFps)
 {
 	dsRenderer* renderer = application->renderer;
 	testScene->allocator = allocator;
@@ -260,11 +250,13 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 		return false;
 	}
 
-	DS_VERIFY(dsSceneLoadContext_registerItemListType(loadContext, "LightData", &dsLightData_load,
-		NULL, NULL));
+	DS_VERIFY(dsSceneLoadContext_registerItemListType(
+		loadContext, "LightData", &dsLightData_load, NULL, NULL));
+	DS_VERIFY(dsSceneLoadContext_registerItemListType(
+		loadContext, "TestSceneUpdate", &dsTestSceneUpdate_load, NULL, NULL));
 
-	dsSceneLoadScratchData* scratchData = dsSceneLoadScratchData_create(allocator,
-		renderer->mainCommandBuffer);
+	dsSceneLoadScratchData* scratchData = dsSceneLoadScratchData_create(
+		allocator, renderer->mainCommandBuffer);
 	if (!scratchData)
 	{
 		DS_LOG_ERROR_F("TestScene", "Couldn't create load scratch data: %s", dsErrorString(errno));
@@ -272,8 +264,8 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 		return false;
 	}
 
-	testScene->resources = dsSceneResources_loadResource(allocator, NULL, loadContext, scratchData,
-		dsFileResourceType_Embedded, "resources.dssr");
+	testScene->resources = dsSceneResources_loadResource(
+		allocator, NULL, loadContext, scratchData, dsFileResourceType_Embedded, "resources.dssr");
 	if (!testScene->resources)
 	{
 		DS_LOG_ERROR_F("TestScene", "Couldn't load scene resources: %s", dsErrorString(errno));
@@ -285,13 +277,11 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 	DS_VERIFY(dsSceneLoadScratchData_pushSceneResources(scratchData, &testScene->resources, 1));
 
 	dsSceneResourceType resourceType;
-	const dsSceneNodeType* transformNodeType = dsSceneTransformNode_type();
 	if (!dsSceneResources_findResource(&resourceType, (void**)&testScene->primaryTransform,
 			testScene->resources, "primaryTransform") ||
-		resourceType != dsSceneResourceType_SceneNode ||
-		!dsSceneNode_isOfType((dsSceneNode*)testScene->primaryTransform, transformNodeType))
+		resourceType != dsSceneResourceType_SceneNode)
 	{
-		DS_LOG_ERROR("TestScene", "Couldn't find transform node 'primaryTransform'.");
+		DS_LOG_ERROR("TestScene", "Couldn't find node 'primaryTransform'.");
 		dsSceneLoadContext_destroy(loadContext);
 		dsSceneLoadScratchData_destroy(scratchData);
 		return false;
@@ -299,10 +289,9 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 
 	if (!dsSceneResources_findResource(&resourceType, (void**)&testScene->secondaryTransform,
 			testScene->resources, "secondaryTransform") ||
-		resourceType != dsSceneResourceType_SceneNode ||
-		!dsSceneNode_isOfType((dsSceneNode*)testScene->secondaryTransform, transformNodeType))
+		resourceType != dsSceneResourceType_SceneNode)
 	{
-		DS_LOG_ERROR("TestScene", "Couldn't find transform node 'secondaryTransform'.");
+		DS_LOG_ERROR("TestScene", "Couldn't find node 'secondaryTransform'.");
 		dsSceneLoadContext_destroy(loadContext);
 		dsSceneLoadScratchData_destroy(scratchData);
 		return false;
@@ -313,6 +302,15 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 	if (!testScene->scene)
 	{
 		DS_LOG_ERROR_F("TestScene", "Couldn't load scene: %s", dsErrorString(errno));
+		dsSceneLoadContext_destroy(loadContext);
+		dsSceneLoadScratchData_destroy(scratchData);
+		return false;
+	}
+
+	testScene->update = dsScene_findItemList(testScene->scene, "update");
+	if (!testScene->update)
+	{
+		DS_LOG_ERROR("TestScene", "Couldn't find scene item list 'update'.");
 		dsSceneLoadContext_destroy(loadContext);
 		dsSceneLoadScratchData_destroy(scratchData);
 		return false;
@@ -349,16 +347,18 @@ static bool setup(TestScene* testScene, dsApplication* application, dsAllocator*
 	dsView_setPerspectiveProjection(testScene->view, dsDegreesToRadiansf(45.0f), 0.1f, 100.0f);
 	testScene->secondarySceneSet = true;
 
-	testScene->threadPool = dsResourceManager_createThreadPool(allocator, renderer->resourceManager,
-		dsThreadPool_defaultThreadCount(), 0);
+	testScene->threadPool = dsResourceManager_createThreadPool(
+		allocator, renderer->resourceManager, dsThreadPool_defaultThreadCount(), 0);
 	if (!testScene->threadPool)
 		return false;
 
-	testScene->threadManager = dsSceneThreadManager_create(allocator, renderer,
-		testScene->threadPool);
+	testScene->threadManager = dsSceneThreadManager_create(
+		allocator, renderer, testScene->threadPool);
 	if (!testScene->threadManager)
 		return false;
 
+	float updatePeriod = updateFps > 0.0f ? 1.0f/updateFps : 0.0f;
+	DS_VERIFY(dsSceneTick_initialize(&testScene->tick, updatePeriod, 1.0f));
 	return true;
 }
 
@@ -381,6 +381,7 @@ int dsMain(int argc, const char** argv)
 
 	dsRendererType rendererType = dsRendererType_Default;
 	const char* deviceName = NULL;
+	float updateFps = 0.0f;
 	for (int i = 1; i < argc; ++i)
 	{
 		if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0)
@@ -414,6 +415,24 @@ int dsMain(int argc, const char** argv)
 			}
 			deviceName = argv[++i];
 		}
+		else if (strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--update-fps") == 0)
+		{
+			if (i == argc - 1)
+			{
+				printf("--update-fps option requires an argument\n");
+				printHelp(argv[0]);
+				return 1;
+			}
+
+			char* endPtr;
+			updateFps = strtof(argv[++i], &endPtr);
+			if (updateFps < 0.0f || *endPtr)
+			{
+				printf("--update-fps option must be a float >= 0\n");
+				printHelp(argv[0]);
+				return 1;
+			}
+		}
 		else if (*argv[i])
 		{
 			printf("Unknown option: %s\n", argv[i]);
@@ -423,9 +442,11 @@ int dsMain(int argc, const char** argv)
 	}
 
 	DS_LOG_INFO_F("TestScene", "Render using %s", dsRenderBootstrap_rendererName(rendererType));
+	DS_LOG_INFO("TestScene", "Press space to pause/unpause.");
 	DS_LOG_INFO("TestScene", "Press '1' to toggle anti-aliasing.");
 	DS_LOG_INFO("TestScene", "Press '2' to toggle sub-scene.");
 	DS_LOG_INFO("TestScene", "Press '3' to toggle multi-threaded rendering.");
+	DS_LOG_INFO("TestScene", "Press 'V' to toggle vsync.");
 
 	dsSystemAllocator renderAllocator;
 	DS_VERIFY(dsSystemAllocator_initialize(&renderAllocator, DS_ALLOCATOR_NO_LIMIT));
@@ -475,7 +496,7 @@ int dsMain(int argc, const char** argv)
 
 	TestScene testScene;
 	memset(&testScene, 0, sizeof(testScene));
-	if (!setup(&testScene, application, (dsAllocator*)&testSceneAllocator))
+	if (!setup(&testScene, application, (dsAllocator*)&testSceneAllocator, updateFps))
 	{
 		shutdown(&testScene);
 		return 3;
